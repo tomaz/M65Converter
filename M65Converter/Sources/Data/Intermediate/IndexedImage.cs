@@ -5,7 +5,7 @@ using System.Text;
 namespace M65Converter.Sources.Data.Intermediate;
 
 /// <summary>
-/// Image specified as indexes.
+/// Image specified as indices.
 /// 
 /// Note: index can represent any kind of lookup - characters, colours etc. based on context in which the indexed image is used.
 /// </summary>
@@ -25,7 +25,17 @@ public class IndexedImage
 	#region Accessing
 
 	/// <summary>
-	/// Gets the width of the image as number of indexes.
+	/// Colour palette bank. Only relevant for 4-bit colours.
+	/// </summary>
+	public int Bank { get; set; } = 0;
+
+	/// <summary>
+	/// Number of colours per bank. Only relevant for 4-bit colours. This can be used to calculate the base colour index in merged palette.
+	/// </summary>
+	public int ColoursPerBank { get; set; } = 0;
+
+	/// <summary>
+	/// Gets the width of the image as number of indices.
 	/// </summary>
 	public int Width
 	{
@@ -33,7 +43,7 @@ public class IndexedImage
 	}
 
 	/// <summary>
-	/// Gets the height of the image as number of indexes.
+	/// Gets the height of the image as number of indices.
 	/// </summary>
 	public int Height
 	{
@@ -89,20 +99,26 @@ public class IndexedImage
 	#region Changing
 
 	/// <summary>
-	/// Remaps all indexes accorgind to given map where keys are source (original) and values destination (new) indexes.
+	/// Remaps all indices accorging to given map where keys are source (original) and values destination (new) indices.
+	/// 
+	/// Caller can assign 2 optional callbacks:
+	/// - rowCallback: called for every new pixel row. Arguments:
+	///		- int: row y coordinate
+	///	- colourCallback: called for every pixel. Arguments:
+	///		- int: x location of the pixel
+	///		- int: y location of the pixel
+	///		- int: original image index
+	///		- int: merged (new) image index (may be the same as original of course)
 	/// </summary>
-	public void Remap(Dictionary<int, int> map, int itemIndex)
+	public void Remap(
+		Dictionary<int, int> map,
+		Action<int>? rowCallback = null,
+		Action<int, int, int, int>? colourCallback = null
+	)
 	{
-		var isItemChangeLogged = false; // used to only log item if it has new colours
-		var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter() : null;
-
-		var changeDescriptions = new List<StringBuilder>();
-		var headerBuilder = Logger.Verbose.IsEnabled ? new StringBuilder() : null;
-		var headerLineBuilder = headerBuilder != null ? new StringBuilder() : null;
-
 		for (var y = 0; y < Height;	y++)
 		{
-			formatter?.StartNewLine();
+			rowCallback?.Invoke(y);
 
 			for (var x = 0; x < Width; x++)
 			{
@@ -113,27 +129,16 @@ public class IndexedImage
 					var mapped = map[original];
 					if (mapped != original)
 					{
-						isItemChangeLogged = true;
-						formatter?.AppendChange(original, mapped);
 						this[x, y] = mapped;
 					}
-					else
-					{
-						formatter?.AppendNoChange(original);
-					}
+
+					colourCallback?.Invoke(x, y, original, mapped);
 				}
 				catch (Exception e)
 				{
-					throw new ArgumentException($"Invalid mapping at ({x},{y}): original {this[x, y]} doesn't have corresponding mapping!", e);
+					throw new ArgumentException($"Invalid mapping at ({x},{y}): index {this[x, y]} not found in mapping {map}!", e);
 				}
 			}
-		}
-
-		if (isItemChangeLogged && formatter != null)
-		{
-			Logger.Verbose.Separator();
-			Logger.Verbose.Message($"Remapping colour indexes for char {itemIndex}");
-			formatter.ExportLines(Logger.Verbose.Option);
 		}
 	}
 

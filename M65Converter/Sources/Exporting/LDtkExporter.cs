@@ -1,4 +1,5 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Exporting.LDtk;
 using M65Converter.Sources.Helpers.Utils;
 using M65Converter.Sources.Runners;
 
@@ -6,86 +7,86 @@ namespace M65Converter.Sources.Exporting;
 
 public abstract class LDtkExporter
 {
-	public List<LayerData> Layers { get; set; } = new();
-	public ImagesContainer CharsContainer { get; set; } = null!;
-	public LDtkRunner.OptionsType Options { get; set; } = null!;
+	public OptionsType Options { get; set; } = null!;
+
+	#region Initialization & Disposal
+
+	public static LDtkExporter Create(OptionsType options)
+	{
+		LDtkExporter result = options.ProgramOptions.IsRasterRewriteBufferSupported
+			? throw new NotImplementedException()
+			: new LDtkExporterMergedLayers();
+
+		result.Options = options;
+
+		return result;
+	}
+
+	protected LDtkExporter()
+	{
+	}
+
+	#endregion
 
 	#region Subclass
 
-	public abstract void Export();
+	/// <summary>
+	/// Called before any exporting takes place. Subclass can prepare and assign data that will be used throughout the export afterwards.
+	/// </summary>
+	protected virtual void OnPrepareExportData()
+	{
+		// Noting to do by default.
+	}
+
+	/// <summary>
+	/// Called when layers need to be exported.
+	/// </summary>
+	protected abstract void OnExportLayerData(Exporter exporter);
+
+	/// <summary>
+	/// Called when colours RAM needs to be exported.
+	/// </summary>
+	protected abstract void OnExportColourData(Exporter exporter);
+
+	#endregion
+
+	#region Public
+
+	public void Export()
+	{
+		Logger.Verbose.Separator();
+		Logger.Info.Message("Exporting LDtk data");
+
+		// Ask subclass to prepare common data.
+		OnPrepareExportData();
+
+		// Export the palette.
+		ExportPalette(CreateExporter("palette", "chars.pal"));
+
+		// Export the characters.
+		ExportCharsData(CreateExporter("chars", "chars.bin"));
+
+		// Export the layer data.
+		OnExportLayerData(CreateExporter("layers", "layer.bin"));
+
+		// Export the colour data.
+		OnExportColourData(CreateExporter("colour ram", "colour.bin"));
+
+		Logger.Verbose.Separator();
+	}
 
 	#endregion
 
 	#region Exporting
 
-	protected void ExportLayer(IndexedImage layer, string? filename = null)
+	private void ExportCharsData(Exporter exporter)
 	{
-		// Prepare output folder base name and the final name for this layer.
-		var outputInfo = PrepareOutputFolder();
-
-		// Export the layer data.
-		var layerPath = PrepareOutputFilename(outputInfo, filename, "layer.bin");
-		ExportLayerData(layer, layerPath);
-
-		// Export the characters.
-		var charsPath = PrepareOutputFilename(outputInfo, filename, "chars.bin");
-		ExportCharsData(charsPath);
-
-		// Export the palette.
-		var palettePath = PrepareOutputFilename(outputInfo, filename, "chars.pal");
-		ExportPalette(palettePath);
-	}
-
-	private void ExportLayerData(IndexedImage layer, string path)
-	{
-		Export("layer", path, writer =>
-		{
-			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option("All pixels as char indices");
-			Logger.Verbose.Option("Top-to-down, left-to-right order");
-			Logger.Verbose.Option($"Each pixel is {Options.CharWidth} byte(s)");
-
-			var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter { IsHex = true } : null;
-
-			for (var y = 0; y < layer.Height; y++)
-			{
-				formatter?.StartNewLine();
-
-				for (var x = 0; x < layer.Width; x++)
-				{
-					var index = layer[x, y];
-					var charIndex = (Options.CharsBaseAddress + index * Options.CharInfo.CharSize) / Options.CharInfo.CharSize;
-
-					switch (Options.CharWidth)
-					{
-						case 1:
-							writer.Write((byte)(charIndex & 0xff));
-							formatter?.AppendNoChange(charIndex);
-							break;
-
-						case 2:
-							writer.Write((byte)(charIndex & 0xff));
-							writer.Write((byte)((charIndex >> 8) & 0xff));
-							formatter?.AppendNoChange(charIndex);
-							break;
-					}
-				}
-			}
-
-			Logger.Verbose.Separator();
-			Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${Options.CharsBaseAddress:X}):");
-			formatter?.ExportLines(Logger.Verbose.Option);
-		});
-	}
-
-	private void ExportCharsData(string path)
-	{
-		Export("characters", path, writer =>
+		exporter.Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
 			Logger.Verbose.Option("All pixels as palette indices");
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
-			switch (Options.CharInfo.ColoursPerTile)
+			switch (Options.ProgramOptions.CharInfo.ColoursPerTile)
 			{
 				case 16:
 					Logger.Verbose.Option("Each character is 16x8 pixels");
@@ -97,11 +98,11 @@ public abstract class LDtkExporter
 					break;
 			}
 
-			foreach (var character in CharsContainer.Images)
+			foreach (var character in Options.CharsContainer.Images)
 			{
 				for (var y = 0; y < character.IndexedImage.Height; y++)
 				{
-					switch (Options.CharInfo.ColoursPerTile)
+					switch (Options.ProgramOptions.CharInfo.ColoursPerTile)
 					{
 						case 16:
 							for (var x = 0; x < character.IndexedImage.Width; x += 2)
@@ -126,19 +127,19 @@ public abstract class LDtkExporter
 		});
 	}
 
-	private void ExportPalette(string path)
+	private void ExportPalette(Exporter exporter)
 	{
-		Export("palette", path, writer =>
+		exporter.Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option($"First all {CharsContainer.GlobalPalette.Count} red values");
-			Logger.Verbose.Option($"Followed by {CharsContainer.GlobalPalette.Count} green values");
-			Logger.Verbose.Option($"Followed by {CharsContainer.GlobalPalette.Count} blue values");
+			Logger.Verbose.Option($"First all {Options.CharsContainer.GlobalPalette.Count} red values");
+			Logger.Verbose.Option($"Followed by {Options.CharsContainer.GlobalPalette.Count} green values");
+			Logger.Verbose.Option($"Followed by {Options.CharsContainer.GlobalPalette.Count} blue values");
 			Logger.Verbose.Option("Each RGB component is 1 byte");
 
 			void Export(Func<Argb32, byte> picker)
 			{
-				foreach (var colour in CharsContainer.GlobalPalette)
+				foreach (var colour in Options.CharsContainer.GlobalPalette)
 				{
 					writer.Write(picker(colour));
 				}
@@ -154,52 +155,14 @@ public abstract class LDtkExporter
 
 	#region Helpers
 
-	private static void Export(string description, string path, Action<BinaryWriter> handler)
+	private Exporter CreateExporter(string description, string suffix)
 	{
-		Logger.Verbose.Separator();
-		Logger.Debug.Message($"Exporting {description} to {Path.GetFileName(path)}");
-		Logger.Verbose.Message($"{path}");
-
-		Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-
-		using var writer = new BinaryWriter(new FileStream(path, FileMode.Create));
-		handler(writer);
-
-		Logger.Debug.Message($"{writer.BaseStream.Length} bytes");
-	}
-
-	private Tuple<string, string> PrepareOutputFolder()
-	{
-		// Get first source layer folder (all layers are contained in the same folder, so it doesn't matter which one we take).
-		var levelFolder = Path.GetDirectoryName(Layers[0].SourcePath);
-
-		// Get the root folder of the level. Simplified export saves each level into its own folder with data.json file inside "{levelName}/simplified/AutoLayer" subfolder. So we remove 3 folders from layer image file to get to the root where LDtk source file is contained. Note how we dynamically swap source and root folder so that we still can get a valid result if `GetDirectoryName` returns null (aka folder is root).
-		var rootFolder = levelFolder;
-		for (int i = 0; i < 3; i++)
+		return new Exporter
 		{
-			levelFolder = rootFolder;
-			rootFolder = Path.GetDirectoryName(rootFolder);
-			if (rootFolder == null)
-			{
-				rootFolder = levelFolder;
-				break;
-			}
-		}
-
-		// At this point we have root and level folders. We need level folder either way, but for root we prefer explicit output folder and falldown to root folder (where LDtk file is saved).
-		var root = Options.OutputFolder?.FullName ?? rootFolder!;
-		var level = new DirectoryInfo(levelFolder!).Name;
-		return new Tuple<string, string>(root, level);
-	}
-
-	private string PrepareOutputFilename(Tuple<string, string> pathLevel, string? name, string suffix)
-	{
-		var filename = Options.OutputNameTemplate
-			.Replace("{level}", pathLevel.Item2)
-			.Replace("{name}", name ?? pathLevel.Item2)
-			.Replace("{suffix}", suffix);
-
-		return Path.Combine(pathLevel.Item1, filename);
+			Options = Options,
+			LogDescription = description,
+			FileSuffix = suffix,
+		};
 	}
 
 	#endregion
@@ -212,89 +175,78 @@ public abstract class LDtkExporter
 		public IndexedImage IndexedImage { get; set; } = null!;
 	}
 
-	#endregion
-}
-
-public class LDtkMergedExporter : LDtkExporter
-{
-	#region Overrides
-
-	public override void Export()
+	public class OptionsType
 	{
-		Logger.Verbose.Separator();
-		Logger.Info.Message("Merging into single layer");
-
-		var mergerLayer = CreateEmptyMergedLayer();
-		MergeLayers(mergerLayer);
-		ExportLayer(mergerLayer);
+		public List<LayerData> Layers { get; set; } = new();
+		public ImagesContainer CharsContainer { get; set; } = null!;
+		public LDtkRunner.OptionsType ProgramOptions { get; set; } = null!;
 	}
 
-	#endregion
-
-	#region Helpers
-
-	private IndexedImage CreateEmptyMergedLayer()
+	protected class Exporter
 	{
-		// Find the largest layer in case they differ in size.
-		var width = 0;
-		var height = 0;
-		foreach (var layer in Layers)
+		public OptionsType Options { get; init; } = null!;
+		public string LogDescription { get; init; } = null!;
+		public string FileSuffix { get; init; } = null!;
+
+		#region Exporting
+
+		public void Export(Action<BinaryWriter> handler)
 		{
-			if (layer.IndexedImage.Width > width) width = layer.IndexedImage.Width;
-			if (layer.IndexedImage.Height > height) height = layer.IndexedImage.Height;
+			// Prepare filename.
+			var outputInfo = PrepareOutputFolder();
+			var path = PrepareOutputFilename(outputInfo, null, FileSuffix);
+
+			Logger.Verbose.Separator();
+			Logger.Debug.Message($"Exporting {LogDescription} to {Path.GetFileName(path)}");
+			Logger.Verbose.Message($"{path}");
+
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+			using var writer = new BinaryWriter(new FileStream(path, FileMode.Create));
+			handler(writer);
+
+			Logger.Debug.Message($"{writer.BaseStream.Length} bytes");
 		}
 
-		// Prepare merged layer prefilled with transparent character.
-		var result = new IndexedImage();
-		result.Prefill(width, height, CharsContainer.TransparentImageIndex);
+		#endregion
 
-		return result;
-	}
+		#region Helpers
 
-	private void MergeLayers(IndexedImage destination)
-	{
-		Logger.Verbose.Message("Merging layers");
-
-		var isFirstLayer = true;
-
-		// Layers are exported in order bottom to top, so we need to iterate them reversed.
-		foreach (var layer in Layers)
+		private Tuple<string, string> PrepareOutputFolder()
 		{
-			Logger.Verbose.Separator();
-			Logger.Verbose.Option($"{Path.GetFileName(layer.SourcePath)}");
+			// Get first source layer folder (all layers are contained in the same folder, so it doesn't matter which one we take).
+			var levelFolder = Path.GetDirectoryName(Options.Layers[0].SourcePath);
 
-			var isChangeLogged = false;
-			var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter() : null;
-
-			for (var y = 0; y < layer.IndexedImage.Height; y++)
+			// Get the root folder of the level. Simplified export saves each level into its own folder with data.json file inside "{levelName}/simplified/AutoLayer" subfolder. So we remove 3 folders from layer image file to get to the root where LDtk source file is contained. Note how we dynamically swap source and root folder so that we still can get a valid result if `GetDirectoryName` returns null (aka folder is root).
+			var rootFolder = levelFolder;
+			for (int i = 0; i < 3; i++)
 			{
-				formatter?.StartNewLine();
-
-				for (var x = 0; x < layer.IndexedImage.Width; x++)
+				levelFolder = rootFolder;
+				rootFolder = Path.GetDirectoryName(rootFolder);
+				if (rootFolder == null)
 				{
-					var layerCharIndex = layer.IndexedImage[x, y];
-
-					if (layerCharIndex != CharsContainer.TransparentImageIndex)
-					{
-						var original = isFirstLayer ? layerCharIndex : destination[x, y];
-						isChangeLogged = true;
-						formatter?.AppendChange(original, layerCharIndex);
-						destination[x, y] = layerCharIndex;
-					}
-					else
-					{
-						formatter?.AppendNoChange(layerCharIndex);
-					}
+					rootFolder = levelFolder;
+					break;
 				}
 			}
 
-			if (isChangeLogged && formatter != null)
-			{
-				formatter.ExportLines(Logger.Verbose.Option);
-			}
-
-			isFirstLayer = false;
+			// At this point we have root and level folders. We need level folder either way, but for root we prefer explicit output folder and falldown to root folder (where LDtk file is saved).
+			var root = Options.ProgramOptions.OutputFolder?.FullName ?? rootFolder!;
+			var level = new DirectoryInfo(levelFolder!).Name;
+			return new Tuple<string, string>(root, level);
 		}
+
+		private string PrepareOutputFilename(Tuple<string, string> pathLevel, string? name, string suffix)
+		{
+			var filename = Options.ProgramOptions.OutputNameTemplate
+				.Replace("{level}", pathLevel.Item2)
+				.Replace("{name}", name ?? pathLevel.Item2)
+				.Replace("{suffix}", suffix);
+
+			return Path.Combine(pathLevel.Item1, filename);
+		}
+
+		#endregion
 	}
 
 	#endregion

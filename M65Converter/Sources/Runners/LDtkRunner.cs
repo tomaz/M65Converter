@@ -6,6 +6,7 @@ using M65Converter.Sources.Helpers.Converters;
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Inputs;
 using M65Converter.Sources.Helpers.Utils;
+
 using System.CommandLine;
 using System.CommandLine.Binding;
 
@@ -26,17 +27,10 @@ public class LDtkRunner : BaseRunner
 	{
 		base.OnValidate();
 
-		if (Options.CharWidth < 1) Options.CharWidth = 1;
-		if (Options.CharWidth > 2) Options.CharWidth = 2;
-
-		if (Options.CharWidth == 1 && Options.CharsBaseAddress <= 0x3fc0) {
-			throw new ArgumentException($"Chars base address must be $3fc0 or less when single byte is used!");
-		}
-
-		if ((Options.CharsBaseAddress % Options.CharInfo.CharSize) != 0)
+		if ((Options.CharsBaseAddress % Options.CharInfo.CharDataSize) != 0)
 		{
-			var prev = (Options.CharsBaseAddress / Options.CharInfo.CharSize) * Options.CharInfo.CharSize;
-			var next = prev + Options.CharInfo.CharSize;
+			var prev = (Options.CharsBaseAddress / Options.CharInfo.CharDataSize) * Options.CharInfo.CharDataSize;
+			var next = prev + Options.CharInfo.CharDataSize;
 			throw new ArgumentException($"Char base address must start on 64 byte boundary. Consider changing to ${prev:X} or ${next:X}");
 		}
 	}
@@ -140,6 +134,7 @@ public class LDtkRunner : BaseRunner
 			}
 		});
 
+		Logger.Verbose.Separator();
 		Logger.Debug.Message($"{CharsContainer.Images.Count} characters found");
 	}
 
@@ -149,29 +144,28 @@ public class LDtkRunner : BaseRunner
 
 	private void MergePalette()
 	{
+		Logger.Verbose.Separator();
 		Logger.Debug.Message("Merging palette");
 
-		var merger = new PaletteMerger
+		var options = new PaletteMerger.OptionsType
 		{
-			Images = CharsContainer.Images.ToList()
+			Is4Bit = Options.CharColour == OptionsType.CharColourType.NCM,
+			IsUsingTransparency = true,
+			Images = CharsContainer.Images,
 		};
 
-		CharsContainer.GlobalPalette = merger.Merge();
+		CharsContainer.GlobalPalette = PaletteMerger
+			.Create(options)
+			.Merge();
 
-		Logger.Debug.Message($"{CharsContainer.GlobalPalette.Count} palette colours found");
+		Logger.Debug.Message($"{CharsContainer.GlobalPalette.Count} palette colours used");
 	}
 
 	private void ValidateParsedData()
 	{
-		switch (Options.CharWidth)
+		if (CharsContainer.Images.Count > 8192)
 		{
-			case 1:
-				if (CharsContainer.Images.Count <= 256) break;
-				throw new ArgumentException("Too many characters to fit 1 byte, use \"--char-size 2\"");
-
-			case 2:
-				if (CharsContainer.Images.Count <= 65536) break;
-				throw new ArgumentException("Too many characters to fit 2 bytes, adjust source files");
+			throw new ArgumentException("Too many characters to fit 2 bytes, adjust source files");
 		}
 
 		if (CharsContainer.GlobalPalette.Count > 256)
@@ -186,21 +180,16 @@ public class LDtkRunner : BaseRunner
 
 	private void Export()
 	{
-		if (Options.IsRasterRewriteBufferSupported)
+		var options = new LDtkExporter.OptionsType
 		{
+			Layers = ExportLayers,
+			CharsContainer = CharsContainer,
+			ProgramOptions = Options
+		};
 
-		}
-		else
-		{
-			var exporter = new LDtkMergedExporter
-			{
-				Layers = ExportLayers,
-				CharsContainer = CharsContainer,
-				Options = Options
-			};
-
-			exporter.Export();
-		}
+		LDtkExporter
+			.Create(options)
+			.Export();
 	}
 
 	#endregion
@@ -234,13 +223,15 @@ public class LDtkRunner : BaseRunner
 
 		Logger.Debug.Option(string.Join("", new string[]
 		{
-			$"Character type: {Options.CharType} (",
+			$"Character type: {Options.CharColour} (",
 			$"{Options.CharInfo.Width}x{Options.CharInfo.Height} pixels, ",
 			$"{Options.CharInfo.ColoursPerTile} colours per character)"
 		}));
 
-		Logger.Debug.Option($"Character size: {Options.CharWidth} byte(s)");
-		Logger.Debug.Option($"Characters base address: ${Options.CharsBaseAddress:X}");
+		Logger.Debug.Option($"Character size: {Options.CharInfo.CharBytes} bytes");
+
+		var firstChar = Options.CharIndexInRam(0);
+		Logger.Debug.Option($"Characters base address: ${Options.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");
 	}
 
 	#endregion
@@ -281,11 +272,6 @@ public class LDtkRunner : BaseRunner
 		public bool IsRasterRewriteBufferSupported { get; set; }
 
 		/// <summary>
-		/// The width of a single character in bytes.
-		/// </summary>
-		public int CharWidth { get; set; }
-
-		/// <summary>
 		/// Base address where the characters will be loaded into on Mega 65.
 		/// </summary>
 		public int CharsBaseAddress { get; set; }
@@ -293,41 +279,43 @@ public class LDtkRunner : BaseRunner
 		/// <summary>
 		/// Tile type. Changing this value will change <see cref="CharInfo"/> as well.
 		/// </summary>
-		public CharTypeType CharType {
-			get => _charType;
+		public CharColourType CharColour {
+			get => _charColour;
 			set
 			{
-				_charType = value;
+				_charColour = value;
 				_charInfo = null;
 			}
 		}
-		private CharTypeType _charType;
+		private CharColourType _charColour;
 
 		/// <summary>
-		/// Tile information, depends on <see cref="CharType"/>.
+		/// Tile information, depends on <see cref="CharColour"/>.
 		/// </summary>
 		public CharInfoType CharInfo {
 			get
 			{
-				_charInfo ??= CharType switch
+				_charInfo ??= CharColour switch
 				{
-					CharTypeType.FullColour => new CharInfoType
+					CharColourType.FCM => new CharInfoType
 					{
 						Width = 8,
 						Height = 8,
-						CharSize = 64,
+						CharBytes = 2,
+						CharDataSize = 64,
 						ColoursPerTile = 256
 					},
 
-					CharTypeType.NibbleColour => new CharInfoType
+					CharColourType.NCM => new CharInfoType
 					{
 						Width = 16,
 						Height = 8,
-						CharSize = 64,
+						CharBytes = 2,
+						CharDataSize = 64,
 						ColoursPerTile = 16
 					},
 
-					_ => throw new ArgumentException($"Unknown tile type {CharType}")
+					_ => throw new ArgumentException($"Unknown tile type {CharColour}")
 				};
 
 				return _charInfo!;
@@ -335,19 +323,32 @@ public class LDtkRunner : BaseRunner
 		}
 		private CharInfoType? _charInfo = null;
 
+		#region Helpers
+
+		/// <summary>
+		/// Takes "relative" character index (0 = first generated character) and converts it to absolute character index as needed for Mega 65 hardware, taking into condideration char base address.
+		/// </summary>
+		public int CharIndexInRam(int relativeIndex)
+		{
+			return (CharsBaseAddress + relativeIndex * CharInfo.CharDataSize) / CharInfo.CharDataSize;
+		}
+
+		#endregion
+
 		#region Declarations
 
-		public enum CharTypeType
+		public enum CharColourType
 		{
-			FullColour,
-			NibbleColour
+			FCM,
+			NCM
 		}
 
 		public class CharInfoType
 		{
 			public int Width { get; set; }
 			public int Height { get; set; }
-			public int CharSize { get; set; }
+			public int CharBytes { get; set; }
+			public int CharDataSize { get; set; }
 			public int ColoursPerTile { get; set; }
 		}
 
@@ -367,37 +368,32 @@ public class LDtkRunner : BaseRunner
 		};
 
 		private Option<FileInfo?> baseCharsImage = new(
-			aliases: new[] { "-b", "--base" },
+			aliases: new[] { "-c", "--chars" },
 			description: "Optional base characters image"
 		);
 
 		private Option<FileInfo?> outputFolder = new(
-			name: "--out-folder",
+			aliases: new[] { "-o", "--out-folder" },
 			description: "Folder to generate output in; input folder if not specified"
 		);
 
-		private Option<string?> outputFileTemplate = new(
-			name: "--out-name",
+		private Option<string> outputFileTemplate = new(
+			aliases: new[] { "-n", "--out-name" },
 			description: string.Join("\n", new string[] 			
 			{
 				"Name prefix to use for output generation. Can also include subfolder(s). Placeholders:",
 				"- {level} placeholder is replaced with level (input) name",
 				"- {name} placeholder is replaced by output file name",
 				"- {suffix} placeholder is replaced by output file suffix and extension",
-				"If not provided \"{level}-{name}\" is used"
-			})
+				""	// this is used so default value is written in new line
+			}),
+			getDefaultValue: () => "{level}-{name}-{suffix}"
 		);
 
-		private Option<OptionsType.CharTypeType> tileType = new(
-			aliases: new[] { "-t", "--type" },
-			description: "Type of characters to generate",
-			getDefaultValue: () => OptionsType.CharTypeType.FullColour
-		);
-
-		private Option<int> charWidth = new(
-			name: "--char-width",
-			description: "Character width (1 or 2)",
-			getDefaultValue: () => 2
+		private Option<OptionsType.CharColourType> tileType = new(
+			aliases: new[] { "-m", "--colour" },
+			description: "Colour mode",
+			getDefaultValue: () => OptionsType.CharColourType.FCM
 		);
 
 		private Option<string> charBaseAddress = new(
@@ -408,8 +404,8 @@ public class LDtkRunner : BaseRunner
 
 		private Option<bool> rasterRewriteBuffer = new(
 			aliases: new[] { "-r", "--rrb" },
-			description: "Raster rewrite buffer support",
-			getDefaultValue: () => true
+			description: "Raster rewrite buffer support. If enabled, each layer is exported separately using RRB",
+			getDefaultValue: () => false
 		);
 
 		#endregion
@@ -439,10 +435,9 @@ public class LDtkRunner : BaseRunner
 				InputFolders = bindingContext.ParseResult.GetValueForArgument(inputFolders),
 				BaseCharsImage = bindingContext.ParseResult.GetValueForOption(baseCharsImage),
 				OutputFolder = bindingContext.ParseResult.GetValueForOption(outputFolder),
-				OutputNameTemplate = bindingContext.ParseResult.GetValueForOption(outputFileTemplate) ?? "{layer}-{name}",
+				OutputNameTemplate = bindingContext.ParseResult.GetValueForOption(outputFileTemplate)!,
 				CharsBaseAddress = bindingContext.ParseResult.GetValueForOption(charBaseAddress)!.ParseAsInt(),
-				CharWidth = bindingContext.ParseResult.GetValueForOption(charWidth),
-				CharType = bindingContext.ParseResult.GetValueForOption(tileType),
+				CharColour = bindingContext.ParseResult.GetValueForOption(tileType),
 				IsRasterRewriteBufferSupported = bindingContext.ParseResult.GetValueForOption(rasterRewriteBuffer)
 			};
 		}

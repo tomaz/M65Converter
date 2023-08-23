@@ -20,7 +20,7 @@ public class ImageData
 	/// <summary>
 	/// Indexed image where each colour is represented as index into the palette.
 	/// 
-	/// Note: indexes may either be into assigned <see cref="Palette"/>, or into global palette, depending on state of the program.
+	/// Note: indices may either be into assigned <see cref="Palette"/>, or into global palette, depending on state of the program.
 	/// </summary>
 	public IndexedImage IndexedImage { get; set; } = null!;
 

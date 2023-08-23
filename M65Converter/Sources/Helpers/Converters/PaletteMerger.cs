@@ -1,84 +1,86 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Utils;
+using M65Converter.Sources.Helpers.Converters.Palette;
 
 namespace M65Converter.Sources.Helpers.Converters;
 
 /// <summary>
-/// Merges palettes from multiple images into single palette.
+/// Merges palettes from multiple images into single global palette.
 /// 
 /// Input:
 /// - A list of <see cref="ImageData"/> with local palettes and locally indexed image data.
 /// 
 /// Results:
-/// - Global palette with reused colours.
+/// - Global palette with unique colours.
 /// - All indexed images of <see cref="ImageData"/> objects point to global palette.
 /// </summary>
-public class PaletteMerger
+public abstract class PaletteMerger
 {
-	/// <summary>
-	/// The list of all <see cref="ImageData"/> which palettes should be merged.
-	/// </summary>
-	public List<ImageData> Images { get; set; } = null!;
+	protected OptionsType Options { get; private set; } = null!;
 
-	private List<Argb32> palette = new();
+	#region Initialization & Disposal
 
-	#region Public
-
-	/// <summary>
-	/// Merges all colours from assigned images.
-	/// </summary>
-	public List<Argb32> Merge()
+	public static PaletteMerger Create(OptionsType options)
 	{
-		palette.Clear();
+		PaletteMerger result = options.Is4Bit
+			? new PaletteMerger4Bit()
+			: new PaletteMerger8Bit();
 
-		var index = 0;
-		foreach (var image in Images)
-		{
-			// Prepare the dictionary that defines how local colours should be translated to global palette. This also updates palette with all unique colours of the image.
-			var map = MergeColours(image, index);
+		result.Options = options;
 
-			// Remap indexes image with global indexes.
-			image.IndexedImage.Remap(map, index);
+		return result;
+	}
 
-			index++;
-		}
-
-		return palette;
+	protected PaletteMerger()
+	{
 	}
 
 	#endregion
 
-	#region Helpers
+	#region Subclass
 
-	private Dictionary<int, int> MergeColours(ImageData item, int itemIndex)
+	/// <summary>
+	/// Called when the palette needs to be merged from the given list of images.
+	/// 
+	/// Subclass should merge all image colours into the given palette.
+	/// </summary>
+	protected abstract void OnMerge(IReadOnlyList<ImageData> images, List<Argb32> palette);
+
+	#endregion
+
+	#region Public
+
+	/// <summary>
+	/// Merges all colours into global palette.
+	/// </summary>
+	public List<Argb32> Merge()
 	{
-		var isItemChangeLogged = false; // used to only log item if it has new colours
+		var result = new List<Argb32>();
 
-		var result = new Dictionary<int, int>();
-
-		for (var i = 0; i < item.Palette.Count; i++)
-		{
-			var colour = item.Palette[i];
-
-			var index = palette.IndexOf(colour);
-			if (index < 0)
-			{
-				if (!isItemChangeLogged)
-				{
-					isItemChangeLogged = true;
-					Logger.Verbose.Separator();
-					Logger.Verbose.Message($"Merging colours for char {itemIndex}");
-				}
-
-				Logger.Verbose.Option($"{palette.Count} -> {colour}");
-				index = palette.Count;
-				palette.Add(colour);
-			}
-
-			result[i] = index;
-		}
+		OnMerge(Options.Images, result);
 
 		return result;
+	}
+
+	#endregion
+
+	#region Declarations
+
+	public class OptionsType
+	{
+		/// <summary>
+		/// Specifies whether we require 4-bit or 8-bit colours.
+		/// </summary>
+		public bool Is4Bit { get; set; }
+
+		/// <summary>
+		/// Indicates whether transparency should be used or not.
+		/// </summary>
+		public bool IsUsingTransparency { get; set; }
+
+		/// <summary>
+		/// The list of all source images.
+		/// </summary>
+		public IReadOnlyList<ImageData> Images { get; set;} = null!;
 	}
 
 	#endregion

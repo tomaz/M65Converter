@@ -8,6 +8,7 @@ namespace M65Converter.Sources.Helpers.Utils;
 public class ChangesTableFormatter
 {
 	public bool IsHex { get; set; } = false;
+	public int MinValueSize { get; set; } = 0;
 
 	private List<List<Change>> lines = new();
 
@@ -22,6 +23,7 @@ public class ChangesTableFormatter
 	{
 		lines.Last().Add(new Change
 		{
+			MinValueSize = MinValueSize,
 			IsHex = IsHex,
 			Original = original,
 			Modified = original,
@@ -32,6 +34,7 @@ public class ChangesTableFormatter
 	{
 		lines.Last().Add(new Change
 		{
+			MinValueSize = MinValueSize,
 			IsHex = IsHex,
 			Original = from,
 			Modified = to,
@@ -95,7 +98,7 @@ public class ChangesTableFormatter
 			}
 
 			// Calculate sizes for left header. This is simply the number of lines that we set as modified.
-			// Note: we add this as the last entry so that column indexes will match with data. Just something to keep in mind, it's not that important as we'll treat this separately when formatting anyway.
+			// Note: we add this as the last entry so that column indices will match with data. Just something to keep in mind, it's not that important as we'll treat this separately when formatting anyway.
 			result.Add(new Change
 			{
 				IsData = false,
@@ -247,6 +250,7 @@ public class ChangesTableFormatter
 	{
 		public bool IsHex { get; set; } = false;
 		public bool IsData { get; set; } = true;
+		public int MinValueSize { get; set; } = 0;
 		public int Original { get; set; } = -1;
 		public int Modified { get; set; }
 
@@ -299,9 +303,17 @@ public class ChangesTableFormatter
 
 		private string FormattedValue(int value)
 		{
-			return IsHex 
+			// Note: hex formatting will use big-endian. The reason is it can save 1 char in logs per value. However 1 char per column is multiplied by number of columns, so the overall "save" can be significant, mainly as it can be the difference for console line wrapping or not (no wrapping = much more readable at glance). The downside is the value will look different than the actual one (which is in fact saved as little-endian). For example: $801 only uses 3 letters ("$" is not logged) in big endian ("801"), but it would require 4 in little endian ("0108"). Can see this being argued, but so far I think the pros outweight the cons.
+			var result = IsHex
 				? value.ToString("X")
 				: value.ToString();
+
+			while (result.Length < MinValueSize)
+			{
+				result = "0" + result;
+			}
+
+			return result;
 		}
 	}
 

@@ -51,6 +51,16 @@ public static class Logger
 		{
 			if (IsEnabled) Console.WriteLine($"  {option}");
 		}
+
+		public void SubOption(string option)
+		{
+			if (IsEnabled) Console.WriteLine($"    {option}");
+		}
+
+		public void SubSubOption(string option)
+		{
+			if (IsEnabled) Console.WriteLine($"      {option}");
+		}
 	}
 
 	public enum VerbosityType

@@ -1,18 +1,13 @@
-﻿using SixLabors.ImageSharp.Drawing.Processing;
+﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Helpers.Utils;
 
-using System.Runtime.CompilerServices;
+using SixLabors.ImageSharp.Drawing.Processing;
 
 namespace M65Converter.Sources.Helpers.Images;
 
 public static class ImageExtensions
 {
-	/// <summary>
-	/// Converts the given colour to semi-transparent using the given alpha.
-	/// </summary>
-	public static Argb32 WithAlpha(this Argb32 colour, byte alpha)
-	{
-		return new Argb32(colour.R, colour.G, colour.B, alpha);
-	}
+	#region Images
 
 	/// <summary>
 	/// Draws a pixel into the given image processing context.
@@ -45,4 +40,159 @@ public static class ImageExtensions
 		return true;
 	}
 
+	#endregion
+
+	#region Indexed images
+
+	/// <summary>
+	/// Remaps the given <see cref="IndexedImage"/> with logging all changes to a formatter.
+	/// 
+	/// Formatting only occurs if logging is set to verbose.
+	/// 
+	/// Since we almost always use formatting, this results in a much more compact function call. Yet still, we don't add formatting handling into the model classes, so they are independent if formatting is not desired.
+	/// </summary>
+	public static RemapResult RemapWithFormatter(this IndexedImage image, Dictionary<int, int> map)
+	{
+		var isColourRemapped = false; // used to only log item if it has new colours
+		var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter() : null;
+
+		image.Remap(
+			map: map,
+			rowCallback: (y) =>
+			{
+				formatter?.StartNewLine();
+			},
+			colourCallback: (x, y, original, merged) =>
+			{
+				if (merged != original)
+				{
+					isColourRemapped = true;
+					formatter?.AppendChange(original, merged);
+				}
+				else
+				{
+					formatter?.AppendNoChange(original);
+				}
+			}
+		);
+
+		return new RemapResult
+		{
+			IsChanged = isColourRemapped,
+			Formatter = formatter
+		};
+	}
+
+	#endregion
+
+	#region Colours list
+
+	/// <summary>
+	/// Returns the count taking into account transparent colour if needed.
+	/// 
+	/// If <see cref="requiresTransparent"/> is true and this colours list doesn't contain transparent colour, then count + 1 is returned. If transparent colour is not required or is present, then count is returned.
+	/// </summary>
+	public static int CountWithTransparent(this IReadOnlyList<Argb32> colours, bool requiresTransparent)
+	{
+		if (requiresTransparent && colours.TransparentIndex() < 0)
+		{
+			return colours.Count + 1;
+		}
+
+		return colours.Count;
+	}
+
+	/// <summary>
+	/// Returns the index of the transparent colour in the given list of colours or -1 if it doesn't contain transparent colour.
+	/// </summary>
+	public static int TransparentIndex(this IReadOnlyList<Argb32> colours)
+	{
+		var index = 0;
+
+		foreach (var colour in colours)
+		{
+			if (colour.IsTransparent())
+			{
+				return index;
+			}
+
+			index++;
+		}
+
+		return -1;
+	}
+
+	/// <summary>
+	/// Merges the given list of source colours into this palette (both are represented as list of colours).
+	/// 
+	/// This function takes care of unifying transparent colour (when alpha is 0, it doesn't matter what RGB components are, it will always be treated as fully transparent colour). When completed, this palette will contain all previous colours plus all unique colours from the given source list.
+	/// 
+	/// Additionally, it prepares a mapping dictionary where the key is original source index and value is mapped index into the merged palette. This is useful for adjusting indexed images.
+	/// 
+	/// Optionally a callback action can be assigned. It will be called for every colour from source telling with parameters:
+	/// - bool: true if colour was added to palette, false if it was already present before
+	/// - int: original colour index (from source)
+	/// - int: new colour index (in destination palette)
+	/// - Argb32: the colour that was handled
+	/// </summary>
+	public static Dictionary<int, int> MergeColours(
+		this List<Argb32> palette, 
+		IReadOnlyList<Argb32> from,
+		Action<bool, int, int, Argb32>? callback = null)
+	{
+		var result = new Dictionary<int, int>();
+
+		for (var i = 0; i < from.Count; i++)
+		{
+			var originalColour = from[i];
+
+			// If this is transparent colour, convert it so RGB will always match. This way we won't end up with 2 transparent colours which have different RGB components.
+			var colour = originalColour;
+			if (colour.A == 0)
+			{
+				colour = new Argb32(r: 0, b: 0, g: 0, a: 0);
+			}
+
+			// Find the colour in this palette. If not found, we need to add it. As we're adding to the end, the index is current count, so adjust it.
+			var index = palette.IndexOf(colour);
+			if (index < 0)
+			{
+				index = palette.Count;
+				palette.Add(colour);
+				callback?.Invoke(true, i, index, originalColour);
+			}
+			else
+			{
+				callback?.Invoke(false, i, index, originalColour);
+			}
+
+			result[i] = index;
+		}
+
+		return result;
+	}
+
+	#endregion
+
+	#region Colours
+
+	/// <summary>
+	/// Determines if this colour is fully transparent.
+	/// </summary>
+	public static bool IsTransparent(this Argb32 colour)
+	{
+		return colour.A == 0;
+	}
+
+	#endregion
+
+	#region Declarations
+
+	public class RemapResult
+	{
+		public bool IsChanged { get; set; }
+		public ChangesTableFormatter? Formatter { get; set; }
+	}
+
+	#endregion
 }

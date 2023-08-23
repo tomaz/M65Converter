@@ -95,7 +95,7 @@ public class ImagesContainer
 			IsFullyTransparent = true,
 		};
 
-		// Prepare palette and indexes image.
+		// Prepare palette and indices image.
 		TransparentImage.Palette.Add(new Argb32(r: 0, g: 0, b: 0, a: 0));
 		TransparentImage.IndexedImage.Prefill(
 			width: TransparentImage.Image.Width,
