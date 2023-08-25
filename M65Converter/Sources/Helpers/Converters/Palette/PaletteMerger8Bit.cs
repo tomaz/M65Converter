@@ -26,7 +26,7 @@ public class PaletteMerger8Bit : PaletteMerger
 			{
 				Logger.Verbose.Separator();
 				Logger.Verbose.Message($"Remapping colour indices for char {index}");
-				result.Formatter.ExportLines(Logger.Verbose.Option);
+				result.Formatter.Log(Logger.Verbose.Option);
 			}
 		}
 	}

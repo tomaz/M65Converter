@@ -135,7 +135,7 @@ public class PaletteMerger4Bit : PaletteMerger
 				if (addResult.Formatter != null)
 				{
 					Logger.Verbose.SubOption(RemapLog(index, addResult.IsChanged));
-					addResult.Formatter.ExportLines(Logger.Verbose.SubOption);
+					addResult.Formatter.Log(Logger.Verbose.SubOption);
 				}
 			}
 			else
@@ -159,7 +159,7 @@ public class PaletteMerger4Bit : PaletteMerger
 				if (addResult.Formatter != null)
 				{
 					Logger.Verbose.SubOption(RemapLog(index, addResult.IsChanged));
-					addResult.Formatter.ExportLines(Logger.Verbose.SubOption);
+					addResult.Formatter.Log(Logger.Verbose.SubOption);
 				}
 			}
 		}

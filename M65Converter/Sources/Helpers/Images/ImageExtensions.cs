@@ -54,7 +54,7 @@ public static class ImageExtensions
 	public static RemapResult RemapWithFormatter(this IndexedImage image, Dictionary<int, int> map)
 	{
 		var isColourRemapped = false; // used to only log item if it has new colours
-		var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter() : null;
+		var formatter = Logger.Verbose.IsEnabled ? new TableFormatter() : null;
 
 		image.Remap(
 			map: map,
@@ -67,11 +67,11 @@ public static class ImageExtensions
 				if (merged != original)
 				{
 					isColourRemapped = true;
-					formatter?.AppendChange(original, merged);
+					formatter?.AppendData(original, merged);
 				}
 				else
 				{
-					formatter?.AppendNoChange(original);
+					formatter?.AppendData(original);
 				}
 			}
 		);
@@ -191,7 +191,7 @@ public static class ImageExtensions
 	public class RemapResult
 	{
 		public bool IsChanged { get; set; }
-		public ChangesTableFormatter? Formatter { get; set; }
+		public TableFormatter? Formatter { get; set; }
 	}
 
 	#endregion

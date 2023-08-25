@@ -131,23 +131,10 @@ public abstract class LDtkExporter
 	{
 		exporter.Export(writer =>
 		{
-			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option($"First all {Options.CharsContainer.GlobalPalette.Count} red values");
-			Logger.Verbose.Option($"Followed by {Options.CharsContainer.GlobalPalette.Count} green values");
-			Logger.Verbose.Option($"Followed by {Options.CharsContainer.GlobalPalette.Count} blue values");
-			Logger.Verbose.Option("Each RGB component is 1 byte");
-
-			void Export(Func<Argb32, byte> picker)
-			{
-				foreach (var colour in Options.CharsContainer.GlobalPalette)
-				{
-					writer.Write(picker(colour));
-				}
-			}
-
-			Export((colour) => colour.R);
-			Export((colour) => colour.G);
-			Export((colour) => colour.B);
+			new PaletteExporter().Export(
+				palette: Options.CharsContainer.GlobalPalette,
+				writer: writer
+			);
 		});
 	}
 

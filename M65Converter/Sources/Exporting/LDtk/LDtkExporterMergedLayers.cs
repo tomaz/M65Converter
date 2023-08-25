@@ -28,7 +28,7 @@ public class LDtkExporterMergedLayers : LDtkExporter
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
 			Logger.Verbose.Option($"Each pixel is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
 
-			var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter { IsHex = true } : null;
+			var formatter = Logger.Verbose.IsEnabled ? new TableFormatter { IsHex = true } : null;
 
 			for (var y = 0; y < MergedLayer.Height; y++)
 			{
@@ -42,13 +42,13 @@ public class LDtkExporterMergedLayers : LDtkExporter
 					// Note: at the moment we only support 2-byte chars.
 					writer.Write((byte)(charIndex & 0xff));
 					writer.Write((byte)((charIndex >> 8) & 0xff));
-					formatter?.AppendNoChange(charIndex);
+					formatter?.AppendData(charIndex);
 				}
 			}
 
 			Logger.Verbose.Separator();
 			Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${Options.ProgramOptions.CharsBaseAddress:X}):");
-			formatter?.ExportLines(Logger.Verbose.Option);
+			formatter?.Log(Logger.Verbose.Option);
 		});
 	}
 
@@ -61,10 +61,10 @@ public class LDtkExporterMergedLayers : LDtkExporter
 			Logger.Verbose.Option($"Each colour is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
 
 			var formatter = Logger.Verbose.IsEnabled
-				? new ChangesTableFormatter
+				? new TableFormatter
 				{ 
 					IsHex = true,
-					MinValueSize = 4,
+					MinValueLength = 4,
 				} 
 				: null;
 
@@ -105,7 +105,7 @@ public class LDtkExporterMergedLayers : LDtkExporter
 							writer.Write((byte)byte2);
 
 							// Note: we flip the bytes so the hex output will be in little endian format.
-							formatter?.AppendNoChange((byte1 << 8) | byte2);
+							formatter?.AppendData((byte1 << 8) | byte2);
 
 							break;
 						}
@@ -139,7 +139,7 @@ public class LDtkExporterMergedLayers : LDtkExporter
 							writer.Write((byte)byte2);
 
 							// Note: we flip the bytes so the hex output will be in little endian format.
-							formatter?.AppendNoChange((byte1 << 8) | byte2);
+							formatter?.AppendData((byte1 << 8) | byte2);
 
 							break;
 						}
@@ -149,7 +149,7 @@ public class LDtkExporterMergedLayers : LDtkExporter
 
 			Logger.Verbose.Separator();
 			Logger.Verbose.Message($"Exported colours (little endian hex values):");
-			formatter?.ExportLines(Logger.Verbose.Option);
+			formatter?.Log(Logger.Verbose.Option);
 		});
 	}
 
@@ -188,7 +188,7 @@ public class LDtkExporterMergedLayers : LDtkExporter
 			Logger.Verbose.Option($"{Path.GetFileName(layer.SourcePath)}");
 
 			var isChangeLogged = false;
-			var formatter = Logger.Verbose.IsEnabled ? new ChangesTableFormatter() : null;
+			var formatter = Logger.Verbose.IsEnabled ? new TableFormatter() : null;
 
 			for (var y = 0; y < layer.IndexedImage.Height; y++)
 			{
@@ -202,19 +202,19 @@ public class LDtkExporterMergedLayers : LDtkExporter
 					{
 						var original = isFirstLayer ? layerCharIndex : destination[x, y];
 						isChangeLogged = true;
-						formatter?.AppendChange(original, layerCharIndex);
+						formatter?.AppendData(original, layerCharIndex);
 						destination[x, y] = layerCharIndex;
 					}
 					else
 					{
-						formatter?.AppendNoChange(layerCharIndex);
+						formatter?.AppendData(layerCharIndex);
 					}
 				}
 			}
 
 			if (isChangeLogged && formatter != null)
 			{
-				formatter.ExportLines(Logger.Verbose.Option);
+				formatter.Log(Logger.Verbose.Option);
 			}
 
 			isFirstLayer = false;
