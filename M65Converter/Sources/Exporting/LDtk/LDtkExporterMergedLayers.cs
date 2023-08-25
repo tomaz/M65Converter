@@ -1,8 +1,6 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Helpers.Utils;
 
-using System.Reflection.Emit;
-
 namespace M65Converter.Sources.Exporting.LDtk;
 
 public class LDtkExporterMergedLayers : LDtkExporter
@@ -24,11 +22,18 @@ public class LDtkExporterMergedLayers : LDtkExporter
 		exporter.Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
+			Logger.Verbose.Option($"Copy to memory ${Options.ProgramOptions.CharsBaseAddress:X}");
+			Logger.Verbose.Option($"Char start index {Options.ProgramOptions.CharIndexInRam(0)} (${Options.ProgramOptions.CharIndexInRam(0):X})");
 			Logger.Verbose.Option("All pixels as char indices");
-			Logger.Verbose.Option("Top-to-down, left-to-right order");
 			Logger.Verbose.Option($"Each pixel is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
+			Logger.Verbose.Option("Top-to-down, left-to-right order");
 
-			var formatter = Logger.Verbose.IsEnabled ? new TableFormatter { IsHex = true } : null;
+			var formatter = Logger.Verbose.IsEnabled
+				? new TableFormatter
+				{
+					IsHex = true,
+				}
+				: null;
 
 			for (var y = 0; y < MergedLayer.Height; y++)
 			{
@@ -39,10 +44,11 @@ public class LDtkExporterMergedLayers : LDtkExporter
 					var index = MergedLayer[x, y];
 					var charIndex = Options.ProgramOptions.CharIndexInRam(index);
 
+					formatter?.AppendData(charIndex);
+
 					// Note: at the moment we only support 2-byte chars.
 					writer.Write((byte)(charIndex & 0xff));
 					writer.Write((byte)((charIndex >> 8) & 0xff));
-					formatter?.AppendData(charIndex);
 				}
 			}
 
@@ -57,8 +63,8 @@ public class LDtkExporterMergedLayers : LDtkExporter
 		exporter.Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option("Top-to-down, left-to-right order");
 			Logger.Verbose.Option($"Each colour is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
+			Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 			var formatter = Logger.Verbose.IsEnabled
 				? new TableFormatter

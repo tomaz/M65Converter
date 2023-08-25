@@ -68,20 +68,13 @@ public class PaletteExporter
 	{
 		var result = new List<Argb32>();
 
-		byte SwapNibble(byte value)
-		{
-			var hi = value >> 4;
-			var low = (value & 0x0f);
-			return (byte)((low << 4) | hi);
-		}
-
 		foreach (var colour in colours)
 		{
 			var swapped = new Argb32(
-				r: SwapNibble(colour.R),
-				g: SwapNibble(colour.G),
-				b: SwapNibble(colour.B),
-				a: SwapNibble(colour.A)		// alpha is not important since we don't export it, but let's swap it anyway...
+				r: colour.R.SwapNibble(),
+				g: colour.G.SwapNibble(),
+				b: colour.B.SwapNibble(),
+				a: colour.A.SwapNibble()	// alpha is not important since we don't export it, but let's swap it anyway...
 			);
 
 			result.Add(swapped);

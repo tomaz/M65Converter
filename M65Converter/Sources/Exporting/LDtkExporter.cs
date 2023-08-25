@@ -54,23 +54,24 @@ public abstract class LDtkExporter
 
 	public void Export()
 	{
+		// Note: the order of exporting is not important from generated data point of view, but the order below was chosen to keep relevant data together in the logs. For example layer data which is followed immediately with chars data, and then chars data followed by palette - with verbose logging the two output pairs are close together to be able to compare visually.
 		Logger.Verbose.Separator();
 		Logger.Info.Message("Exporting LDtk data");
 
 		// Ask subclass to prepare common data.
 		OnPrepareExportData();
 
-		// Export the palette.
-		ExportPalette(CreateExporter("palette", "chars.pal"));
-
-		// Export the characters.
-		ExportCharsData(CreateExporter("chars", "chars.bin"));
+		// Export the colour data.
+		OnExportColourData(CreateExporter("colour ram", "colour.bin"));
 
 		// Export the layer data.
 		OnExportLayerData(CreateExporter("layers", "layer.bin"));
 
-		// Export the colour data.
-		OnExportColourData(CreateExporter("colour ram", "colour.bin"));
+		// Export the characters.
+		ExportCharsData(CreateExporter("chars", "chars.bin"));
+
+		// Export the palette.
+		ExportPalette(CreateExporter("palette", "chars.pal"));
 
 		Logger.Verbose.Separator();
 	}
@@ -84,46 +85,83 @@ public abstract class LDtkExporter
 		exporter.Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option("All pixels as palette indices");
-			Logger.Verbose.Option("Top-to-down, left-to-right order");
-			switch (Options.ProgramOptions.CharInfo.ColoursPerTile)
+			Logger.Verbose.Option($"{Options.CharsContainer.Images.Count} characters");
+			switch (Options.ProgramOptions.CharColour)
 			{
-				case 16:
+				case LDtkRunner.OptionsType.CharColourType.NCM:
 					Logger.Verbose.Option("Each character is 16x8 pixels");
-					Logger.Verbose.Option("Each pixel is 4 bits, 2 pixels form 1 byte");
+					Logger.Verbose.Option("Each pixel is 4 bits, 2 successive pixels form 1 byte");
 					break;
-				case 256:
+				case LDtkRunner.OptionsType.CharColourType.FCM:
 					Logger.Verbose.Option("Each character is 8x8 pixels");
 					Logger.Verbose.Option("Each pixel is 8 bits / 1 byte");
 					break;
 			}
+			Logger.Verbose.Option("All pixels as palette indices");
+			Logger.Verbose.Option("Top-to-down, left-to-right order");
+			Logger.Verbose.Option($"Character size is {Options.ProgramOptions.CharInfo.CharDataSize} bytes");
 
+			var charData = Logger.Verbose.IsEnabled ? new List<byte>() : null;
+			var formatter = Logger.Verbose.IsEnabled
+				? new TableFormatter
+				{
+					IsHex = true,
+					Headers = new[] { "Address", "Index", $"Data ({Options.ProgramOptions.CharInfo.CharDataSize} bytes)" },
+					Prefix = " $",
+					Suffix = " "
+				}
+				: null;
+
+			var charIndex = -1;
 			foreach (var character in Options.CharsContainer.Images)
 			{
+				charIndex++;
+
+				var startingFilePosition = (int)writer.BaseStream.Position;
+
+				charData?.Clear();
+				formatter?.StartNewLine();
+
 				for (var y = 0; y < character.IndexedImage.Height; y++)
 				{
-					switch (Options.ProgramOptions.CharInfo.ColoursPerTile)
+					switch (Options.ProgramOptions.CharColour)
 					{
-						case 16:
+						case LDtkRunner.OptionsType.CharColourType.NCM:
 							for (var x = 0; x < character.IndexedImage.Width; x += 2)
 							{
 								var colour1 = character.IndexedImage[x, y];
 								var colour2 = character.IndexedImage[x + 1, y];
-								var colour = colour1 & 0x0f << 4 | colour2 & 0x0f;
-								writer.Write((byte)colour);
+								var colour = (byte)(((colour1 & 0x0f) << 4) | (colour2 & 0x0f));
+								var swapped = colour.SwapNibble();
+								charData?.Add(swapped);
+								writer.Write(swapped);
 							}
 							break;
 
-						case 256:
+						case LDtkRunner.OptionsType.CharColourType.FCM:
 							for (var x = 0; x < character.IndexedImage.Width; x++)
 							{
-								var colour = character.IndexedImage[x, y];
-								writer.Write((byte)(colour & 0xff));
+								var colour = (byte)(character.IndexedImage[x, y] & 0xff);
+								charData?.Add(colour);
+								writer.Write(colour);
 							}
 							break;
 					}
 				}
+
+				formatter?.AppendData(Options.ProgramOptions.CharsBaseAddress + startingFilePosition);
+				formatter?.AppendData(Options.ProgramOptions.CharIndexInRam(charIndex));
+				if (charData != null)
+				{
+					var dataArray = charData.ToArray();
+					var first8 = string.Join("", dataArray[0..7].Select(x => x.ToString("X2")));
+					var last8 = string.Join("", dataArray[^8..].Select(x => x.ToString("X2")));
+					formatter?.AppendString($"{first8}...{last8}");
+				}
 			}
+
+			Logger.Verbose.Separator();
+			formatter?.Log(Logger.Verbose.Option);
 		});
 	}
 

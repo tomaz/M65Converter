@@ -47,6 +47,14 @@ public class TableFormatter
 		lines.Last().Add(FormattedData(original, modified));
 	}
 
+	public void AppendString(string data)
+	{
+		lines.Last().Add(new Data
+		{
+			Value = data
+		});
+	}
+
 	#endregion
 
 	#region Exporting
@@ -65,10 +73,8 @@ public class TableFormatter
 			var line = lines[0];	// doesn't matter which line, we just need to enumerate all columns
 			for (var i = 0; i < line.Count; i++)
 			{
-				// Headers are always pre-formatted with prefix and suffix.
 				var header = FormattedHeader(i);
-				var formatted = PrefixedSuffixedValue(header);
-				result.Add(formatted);
+				result.Add(header);
 			}
 
 			// Append left header (to the end so header indices match data). Left header is always composed of decimal numbers so we use the largest value so we'll later be able to calculate this column length.

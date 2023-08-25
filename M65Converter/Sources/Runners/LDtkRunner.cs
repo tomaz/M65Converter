@@ -31,7 +31,8 @@ public class LDtkRunner : BaseRunner
 		{
 			var prev = (Options.CharsBaseAddress / Options.CharInfo.CharDataSize) * Options.CharInfo.CharDataSize;
 			var next = prev + Options.CharInfo.CharDataSize;
-			throw new ArgumentException($"Char base address must start on 64 byte boundary. Consider changing to ${prev:X} or ${next:X}");
+			throw new ArgumentException($"Char base address must start on {Options.CharInfo.CharDataSize} byte boundary. C" +
+				$"For example ${prev:X} or ${next:X}");
 		}
 	}
 
@@ -66,19 +67,14 @@ public class LDtkRunner : BaseRunner
 			var image = Image.Load<Argb32>(Options.BaseCharsImage.FullName);
 
 			// For base characters we keep all transparents to achieve consistent results. With these characters it's responsibility of the creator to trim source image. Same for duplicates, we want to leave all characters to preserve positions, however when matching them on layers, it will always take the first match.
-			var splitter = new ImageSplitter
+			var result = new ImageSplitter
 			{
 				ItemWidth = Options.CharInfo.Width,
 				ItemHeight = Options.CharInfo.Height,
 				TransparencyOptions = TransparencyOptionsType.KeepAll,
 				DuplicatesOptions = DuplicatesOptionsType.KeepAll
-			};
-
-			// Split base characters into container.
-			var result = splitter.Split(
-				source: image,
-				container: CharsContainer
-			);
+			}
+			.Split(image, CharsContainer);
 
 			// Note: we ignore indexed image for base characters. We only need actual layers from LDtk.
 			Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} characters");
@@ -111,18 +107,14 @@ public class LDtkRunner : BaseRunner
 				Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Path)}");
 
 				// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
-				var splitter = new ImageSplitter
+				var result = new ImageSplitter
 				{
 					ItemWidth = Options.CharInfo.Width,
 					ItemHeight = Options.CharInfo.Height,
 					TransparencyOptions = TransparencyOptionsType.OpaqueOnly,
 					DuplicatesOptions = DuplicatesOptionsType.UniqueOnly
-				};
-
-				var result = splitter.Split(
-					source: layer.Image,
-					container: CharsContainer
-				);
+				}
+				.Split(layer.Image, CharsContainer);
 
 				ExportLayers.Add(new LDtkExporter.LayerData
 				{
