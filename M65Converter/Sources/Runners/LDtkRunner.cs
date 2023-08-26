@@ -84,7 +84,7 @@ public class LDtkRunner : BaseRunner
 	private void ParseInputs()
 	{
 		// Add fully transparent item if we don't yet have one. We need to have at least one fully transparent character so that we can properly setup indexed layers that contain transparent characters.
-		CharsContainer.AddTransparentImage(
+		var transparentCharAddResult = CharsContainer.AddTransparentImage(
 			width: Options.CharInfo.Width,
 			height: Options.CharInfo.Height
 		);
@@ -99,12 +99,21 @@ public class LDtkRunner : BaseRunner
 			// Parse JSON file data.
 			var data = LDtkData.Parse(input);
 
+			// Prepare all layers we need to extract chars from.
+			var layers = PrepareLayers(data);
+
 			// Add all extra characters from individual layers.
-			foreach (var layer in data.Layers)
+			foreach (var layer in layers)
 			{
 				Logger.Verbose.Separator();
 				Logger.Verbose.Message($"{layer.Path}");
 				Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Path)}");
+
+				// Log transparent character addition.
+				if (transparentCharAddResult.WasAdded)
+				{
+					Logger.Verbose.Message("Adding transparent character");
+				}
 
 				// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
 				var result = new ImageSplitter
@@ -128,6 +137,63 @@ public class LDtkRunner : BaseRunner
 
 		Logger.Verbose.Separator();
 		Logger.Debug.Message($"{CharsContainer.Images.Count} characters found");
+	}
+
+	private List<LDtkData.LayerData> PrepareLayers(LDtkData data)
+	{
+		// If RRB is desired, we export each layer separately and use transparency so we can simply return all layers.
+		if (Options.IsRasterRewriteBufferSupported)
+		{
+			return data.Layers;
+		}
+
+		Logger.Verbose.Separator();
+		Logger.Debug.Message("Merging layers");
+
+		// Otherwise we need to merge all layer images into single one to preserve char transparency and then use this single layer to generate characters from.
+		var mergedImage = new Image<Argb32>(width: data.Width, height: data.Height);
+
+		foreach (var layer in data.Layers)
+		{
+			Logger.Verbose.Option($"{Path.GetFileName(layer.Path)}");
+
+			var mergedPixels = 0;
+
+			mergedImage.Mutate(mutator =>
+			{
+				layer.Image.ProcessPixelRows(accessor =>
+				{
+					for (var y = 0; y < Math.Min(mergedImage.Height, data.Height); y++)
+					{
+						var sourceRowSpan = accessor.GetRowSpan(y);
+
+						for (var x = 0; x < Math.Min(mergedImage.Width, data.Width); x++)
+						{
+							// Only copy non-transparent colours.
+							var colour = sourceRowSpan[x];
+							if (colour.A == 0) continue;
+
+							mergedPixels++;
+							mutator.SetPixel(colour, x, y);
+						}
+					}
+				});
+			});
+
+			var totalPixels = mergedImage.Width * mergedImage.Height;
+			var mergePercentage = mergedPixels * 100.0 / totalPixels;
+			Logger.Verbose.SubOption($"{mergedPixels} of {totalPixels} ({mergePercentage:0.00}%) pixels overwriten");
+		}
+
+		// Return our single merged layer as the result.
+		return new List<LDtkData.LayerData>
+		{
+			new LDtkData.LayerData
+			{
+				Path = Path.Combine(Path.GetDirectoryName(data.Layers.First().Path)!, "MergedLayer"),
+				Image = mergedImage,
+			}
+		};
 	}
 
 	#endregion
@@ -179,9 +245,11 @@ public class LDtkRunner : BaseRunner
 			ProgramOptions = Options
 		};
 
-		LDtkExporter
-			.Create(options)
-			.Export();
+		new LDtkExporter
+		{
+			Options = options
+		}
+		.Export();
 	}
 
 	#endregion
@@ -211,6 +279,9 @@ public class LDtkRunner : BaseRunner
 		else
 		{
 			Logger.Debug.Option("Layers will be merged");
+			if (Options.BaseCharsImage != null) {
+				Logger.Info.Option("NOTE: merging layers may result in extra characters to be generated on top of base character set. Especially if layers use characters with transparent pixels.");
+			}
 		}
 
 		Logger.Debug.Option(string.Join("", new string[]

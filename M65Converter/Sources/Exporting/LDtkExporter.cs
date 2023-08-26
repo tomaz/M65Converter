@@ -1,54 +1,12 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Exporting.LDtk;
 using M65Converter.Sources.Helpers.Utils;
 using M65Converter.Sources.Runners;
 
 namespace M65Converter.Sources.Exporting;
 
-public abstract class LDtkExporter
+public class LDtkExporter
 {
 	public OptionsType Options { get; set; } = null!;
-
-	#region Initialization & Disposal
-
-	public static LDtkExporter Create(OptionsType options)
-	{
-		LDtkExporter result = options.ProgramOptions.IsRasterRewriteBufferSupported
-			? throw new NotImplementedException()
-			: new LDtkExporterMergedLayers();
-
-		result.Options = options;
-
-		return result;
-	}
-
-	protected LDtkExporter()
-	{
-	}
-
-	#endregion
-
-	#region Subclass
-
-	/// <summary>
-	/// Called before any exporting takes place. Subclass can prepare and assign data that will be used throughout the export afterwards.
-	/// </summary>
-	protected virtual void OnPrepareExportData()
-	{
-		// Noting to do by default.
-	}
-
-	/// <summary>
-	/// Called when layers need to be exported.
-	/// </summary>
-	protected abstract void OnExportLayerData(Exporter exporter);
-
-	/// <summary>
-	/// Called when colours RAM needs to be exported.
-	/// </summary>
-	protected abstract void OnExportColourData(Exporter exporter);
-
-	#endregion
 
 	#region Public
 
@@ -58,14 +16,11 @@ public abstract class LDtkExporter
 		Logger.Verbose.Separator();
 		Logger.Info.Message("Exporting LDtk data");
 
-		// Ask subclass to prepare common data.
-		OnPrepareExportData();
-
 		// Export the colour data.
-		OnExportColourData(CreateExporter("colour ram", "colour.bin"));
+		ExportColourData(CreateExporter("colour ram", "colour.bin"));
 
 		// Export the layer data.
-		OnExportLayerData(CreateExporter("layers", "layer.bin"));
+		ExportLayerData(CreateExporter("layers", "layer.bin"));
 
 		// Export the characters.
 		ExportCharsData(CreateExporter("chars", "chars.bin"));
@@ -79,6 +34,141 @@ public abstract class LDtkExporter
 	#endregion
 
 	#region Exporting
+
+	private void ExportColourData(Exporter exporter)
+	{
+		var layer = Options.Layers.First();
+		var image = layer.IndexedImage;
+
+		exporter.Export(writer =>
+		{
+			Logger.Verbose.Message("Format:");
+			Logger.Verbose.Option($"Each colour is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
+			Logger.Verbose.Option("Top-to-down, left-to-right order");
+
+			var formatter = Logger.Verbose.IsEnabled
+				? new TableFormatter
+				{
+					IsHex = true,
+					MinValueLength = 4,
+				}
+				: null;
+
+			for (var y = 0; y < image.Height; y++)
+			{
+				formatter?.StartNewLine();
+
+				for (var x = 0; x < image.Width; x++)
+				{
+					var index = image[x, y];
+					var charData = Options.CharsContainer.Images[index];
+
+					switch (exporter.Options.ProgramOptions.CharColour)
+					{
+						case LDtkRunner.OptionsType.CharColourType.FCM:
+						{
+							// For FCM colour ram is not important, we set both bytes to 0.
+							var byte1 = 0b00000000;
+							var byte2 = 0b00000000;
+
+							writer.Write((byte)byte1);
+							writer.Write((byte)byte2);
+
+							// Note: we flip the bytes so the hex output will be in little endian format.
+							formatter?.AppendData((byte1 << 8) | byte2);
+
+							break;
+						}
+
+						case LDtkRunner.OptionsType.CharColourType.NCM:
+						{
+							var colourBank = charData.IndexedImage.Bank;
+
+							//            +-------------- vertically flip character
+							//            |+------------- horizontally flip character
+							//            ||+------------ alpha blend mode
+							//            |||+----------- gotox
+							//            ||||+---------- use 4-bits per pixel and 16x8 chars
+							//            |||||+--------- trim pixels from right char side
+							//            |||||| +------- number of pixels to trim
+							//            |||||| |
+							//            ||||||-+
+							var byte1 = 0b00001000;
+
+							//            +-------------- underline
+							//            |+-------------- bold
+							//            ||+------------- reverse
+							//            |||+------------ blink
+							//            |||| +---------- colour bank 0-16
+							//            |||| |
+							//            ||||-+--
+							var byte2 = 0b00000000;
+							byte2 |= (colourBank & 0x0f);
+
+							// No sure why colour bank needs to be in high nibble. According to documentation this is needed if VIC II multi-colour-mode is enabled, however in my code this is also needed if VIC III extended attributes are enabled (AND VIC II MCM is disabled).
+							byte2 = ((byte)byte2).SwapNibble();
+
+							writer.Write((byte)byte1);
+							writer.Write((byte)byte2);
+
+							// Note: we flip the bytes so the hex output will be in little endian format.
+							formatter?.AppendData((byte1 << 8) | byte2);
+
+							break;
+						}
+					}
+				}
+			}
+
+			Logger.Verbose.Separator();
+			Logger.Verbose.Message($"Exported colours (little endian hex values):");
+			formatter?.Log(Logger.Verbose.Option);
+		});
+	}
+
+	private void ExportLayerData(Exporter exporter)
+	{
+		exporter.Export(writer =>
+		{
+			Logger.Verbose.Message("Format:");
+			Logger.Verbose.Option($"Copy to memory ${Options.ProgramOptions.CharsBaseAddress:X}");
+			Logger.Verbose.Option($"Char start index {Options.ProgramOptions.CharIndexInRam(0)} (${Options.ProgramOptions.CharIndexInRam(0):X})");
+			Logger.Verbose.Option("All pixels as char indices");
+			Logger.Verbose.Option($"Each pixel is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
+			Logger.Verbose.Option("Top-to-down, left-to-right order");
+
+			var formatter = Logger.Verbose.IsEnabled
+				? new TableFormatter
+				{
+					IsHex = true,
+				}
+				: null;
+
+			var layer = Options.Layers.First();
+			var image = layer.IndexedImage;
+
+			for (var y = 0; y < image.Height; y++)
+			{
+				formatter?.StartNewLine();
+
+				for (var x = 0; x < image.Width; x++)
+				{
+					var index = image[x, y];
+					var charIndex = Options.ProgramOptions.CharIndexInRam(index);
+
+					formatter?.AppendData(charIndex);
+
+					// Note: at the moment we only support 2-byte chars.
+					writer.Write((byte)(charIndex & 0xff));
+					writer.Write((byte)((charIndex >> 8) & 0xff));
+				}
+			}
+
+			Logger.Verbose.Separator();
+			Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${Options.ProgramOptions.CharsBaseAddress:X}):");
+			formatter?.Log(Logger.Verbose.Option);
+		});
+	}
 
 	private void ExportCharsData(Exporter exporter)
 	{
