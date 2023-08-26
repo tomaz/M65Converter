@@ -141,6 +141,9 @@ public class LDtkExporterMergedLayers : LDtkExporter
 							var byte2 = 0b00000000;
 							byte2 |= (colourBank & 0x0f);
 
+							// No sure why colour bank needs to be in high nibble. According to documentation this is needed if VIC II multi-colour-mode is enabled, however in my code this is also needed if VIC III extended attributes are enabled (AND VIC II MCM is disabled). In fact there are 2 other places where nibbles need to be swapped (palette components export and NCM chars data). Documentation doesn't mention it (or I missed it), but it doesn't work otherwise ¯\_(ツ)_/¯
+							byte2 = ((byte)byte2).SwapNibble();
+
 							writer.Write((byte)byte1);
 							writer.Write((byte)byte2);
 
