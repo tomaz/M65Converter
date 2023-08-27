@@ -288,10 +288,10 @@ public class LDtkRunner : BaseRunner
 		{
 			$"Character type: {Options.CharColour} (",
 			$"{Options.CharInfo.Width}x{Options.CharInfo.Height} pixels, ",
-			$"{Options.CharInfo.ColoursPerTile} colours per character)"
+			$"{Options.CharInfo.ColoursPerChar} colours per character)"
 		}));
 
-		Logger.Debug.Option($"Character size: {Options.CharInfo.CharBytes} bytes");
+		Logger.Debug.Option($"Character size: {Options.CharInfo.PixelDataSize} bytes");
 
 		var firstChar = Options.CharIndexInRam(0);
 		Logger.Debug.Option($"Characters base address: ${Options.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");
@@ -364,18 +364,20 @@ public class LDtkRunner : BaseRunner
 					{
 						Width = 8,
 						Height = 8,
-						CharBytes = 2,
+						PixelDataSize = 2,
 						CharDataSize = 64,
-						ColoursPerTile = 256
+						ColoursPerChar = 256,
+						CharsPerScreenWidth80Columns = 80,
 					},
 
 					CharColourType.NCM => new CharInfoType
 					{
 						Width = 16,
 						Height = 8,
-						CharBytes = 2,
+						PixelDataSize = 2,
 						CharDataSize = 64,
-						ColoursPerTile = 16
+						ColoursPerChar = 16,
+						CharsPerScreenWidth80Columns = 40,
 					},
 
 					_ => throw new ArgumentException($"Unknown tile type {CharColour}")
@@ -408,11 +410,45 @@ public class LDtkRunner : BaseRunner
 
 		public class CharInfoType
 		{
-			public int Width { get; set; }
-			public int Height { get; set; }
-			public int CharBytes { get; set; }
-			public int CharDataSize { get; set; }
-			public int ColoursPerTile { get; set; }
+			/// <summary>
+			/// Width of the character in pixels.
+			/// </summary>
+			public int Width { get; init; }
+
+			/// <summary>
+			/// Height of character in pixels.
+			/// </summary>
+			public int Height { get; init; }
+
+			/// <summary>
+			/// Number of bytes each pixel requires.
+			/// </summary>
+			public int PixelDataSize { get; init; }
+
+			/// <summary>
+			/// Number of bytes each character (aka all pixels) require.
+			/// </summary>
+			public int CharDataSize { get; init; }
+
+			/// <summary>
+			/// Number of colours each character can have.
+			/// </summary>
+			public int ColoursPerChar { get; init; }
+
+			/// <summary>
+			/// Number of characters that can be rendered in each line when 80 column mode is used.
+			/// </summary>
+			public int CharsPerScreenWidth80Columns { get; init; }
+
+			/// <summary>
+			/// Number of characters that can be rendered in each line when 40 column mode is used.
+			/// </summary>
+			public int CharsPerScreenWidth40Columns { get => CharsPerScreenWidth80Columns / 2; }
+
+			/// <summary>
+			/// Screen height in characters.
+			/// </summary>
+			public int CharsPerScreenHeight { get => 25; }
 		}
 
 		#endregion

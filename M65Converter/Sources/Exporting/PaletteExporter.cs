@@ -38,7 +38,7 @@ public class PaletteExporter
 
 			foreach (var colour in swapped)
 			{
-				formatter.StartNewLine();
+				formatter.StartNewRow();
 				formatter.AppendData(colour.R);
 				formatter.AppendData(colour.G);
 				formatter.AppendData(colour.B);

@@ -60,7 +60,7 @@ public static class ImageExtensions
 			map: map,
 			rowCallback: (y) =>
 			{
-				formatter?.StartNewLine();
+				formatter?.StartNewRow();
 			},
 			colourCallback: (x, y, original, merged) =>
 			{

@@ -6,6 +6,9 @@ namespace M65Converter.Sources.Exporting;
 
 public class LDtkExporter
 {
+	/// <summary>
+	/// Options to use for exporting.
+	/// </summary>
 	public OptionsType Options { get; set; } = null!;
 
 	#region Public
@@ -28,6 +31,9 @@ public class LDtkExporter
 		// Export the palette.
 		ExportPalette(CreateExporter("palette", "chars.pal"));
 
+		// Finally export layer info.
+		ExportLayerInfo(CreateExporter("layer info", "layer.inf"));
+
 		Logger.Verbose.Separator();
 	}
 
@@ -43,7 +49,7 @@ public class LDtkExporter
 		exporter.Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option($"Each colour is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
+			Logger.Verbose.Option($"Each colour is {Options.ProgramOptions.CharInfo.PixelDataSize} bytes");
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 			var formatter = Logger.Verbose.IsEnabled
@@ -56,7 +62,7 @@ public class LDtkExporter
 
 			for (var y = 0; y < image.Height; y++)
 			{
-				formatter?.StartNewLine();
+				formatter?.StartNewRow();
 
 				for (var x = 0; x < image.Width; x++)
 				{
@@ -134,7 +140,7 @@ public class LDtkExporter
 			Logger.Verbose.Option($"Copy to memory ${Options.ProgramOptions.CharsBaseAddress:X}");
 			Logger.Verbose.Option($"Char start index {Options.ProgramOptions.CharIndexInRam(0)} (${Options.ProgramOptions.CharIndexInRam(0):X})");
 			Logger.Verbose.Option("All pixels as char indices");
-			Logger.Verbose.Option($"Each pixel is {Options.ProgramOptions.CharInfo.CharBytes} bytes");
+			Logger.Verbose.Option($"Each pixel is {Options.ProgramOptions.CharInfo.PixelDataSize} bytes");
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 			var formatter = Logger.Verbose.IsEnabled
@@ -149,7 +155,7 @@ public class LDtkExporter
 
 			for (var y = 0; y < image.Height; y++)
 			{
-				formatter?.StartNewLine();
+				formatter?.StartNewRow();
 
 				for (var x = 0; x < image.Width; x++)
 				{
@@ -167,6 +173,90 @@ public class LDtkExporter
 			Logger.Verbose.Separator();
 			Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${Options.ProgramOptions.CharsBaseAddress:X}):");
 			formatter?.Log(Logger.Verbose.Option);
+		});
+	}
+
+	private void ExportLayerInfo(Exporter exporter)
+	{
+		var layer = Options.Layers.First();
+		var image = layer.IndexedImage;
+
+		exporter.Export(writer =>
+		{
+			var charSize = Options.ProgramOptions.CharInfo.PixelDataSize;
+
+			var layerWidth = image.Width;
+			var layerHeight = image.Height;
+			var layerSizeChars = layerWidth * layerHeight;
+			var layerSizeBytes = layerSizeChars * charSize;
+			var layerRowSize = layerWidth * charSize;
+
+			var screenColumns = new[] { 40, 80 };
+			var screenWidths = new[]
+			{
+				Options.ProgramOptions.CharInfo.CharsPerScreenWidth40Columns,
+				Options.ProgramOptions.CharInfo.CharsPerScreenWidth80Columns,
+			};
+			var screenHeights = new[]
+			{
+				Options.ProgramOptions.CharInfo.CharsPerScreenHeight,
+				Options.ProgramOptions.CharInfo.CharsPerScreenHeight,
+			};
+
+			Logger.Verbose.Separator();
+			Logger.Verbose.Message("Format (hex values in little endian):");
+			if (Logger.Verbose.IsEnabled)
+			{
+				var formatter = TableFormatter.CreateFileFormatter();
+				
+				formatter.AddFileFormat(size: 1, value: charSize, description: "Character size in bytes");
+				formatter.AddFileFormat(size: 1, value: 0xff, description: "Unused");
+
+				formatter.AddFileSeparator();				
+				formatter.AddFileFormat(size: 2, value: layerWidth, description: "Layer width in characters");
+				formatter.AddFileFormat(size: 2, value: layerHeight, description: "Layer height in characters");
+				formatter.AddFileFormat(size: 2, value: layerRowSize, description: "Layer row size in bytes (logical row size)");
+				formatter.AddFileFormat(size: 4, value: layerSizeChars, description: "Layer size in characters (width * height)");
+				formatter.AddFileFormat(size: 4, value: layerSizeBytes, description: "Layer size in bytes (width * height * char size)");
+
+				for (var i = 0; i < screenColumns.Length; i++)
+				{
+					var columns = screenColumns[i];
+					var width = screenWidths[i];
+					var height = screenHeights[i];
+
+					formatter.AddFileSeparator();
+					formatter.AddFileFormat(size: 1, value: width, description: $"Characters per {columns} column screen width");
+					formatter.AddFileFormat(size: 1, value: height, description: "Characters per screen height");
+					formatter.AddFileFormat(size: 2, value: width * charSize, description: "Screen row size in bytes");
+					formatter.AddFileFormat(size: 2, value: width * height, description: "Screen size in characters");
+					formatter.AddFileFormat(size: 2, value: width * height * charSize, description: "Screen size in bytes");
+				}
+
+				formatter.Log(Logger.Verbose.Option);
+			}
+
+			writer.Write((byte)charSize);
+			writer.Write((byte)0xff);
+
+			writer.Write((ushort)layerWidth);
+			writer.Write((ushort)layerHeight);
+			writer.Write((ushort)layerRowSize);
+			writer.Write((uint)layerSizeChars);
+			writer.Write((uint)layerSizeBytes);
+
+			for (var i = 0; i < screenColumns.Length; i++)
+			{
+				var columns = screenColumns[i];
+				var width = screenWidths[i];
+				var height = screenHeights[i];
+
+				writer.Write((byte)width);
+				writer.Write((byte)height);
+				writer.Write((ushort)(width * charSize));
+				writer.Write((ushort)(width * height));
+				writer.Write((ushort)(width * height * charSize));
+			}
 		});
 	}
 
@@ -210,7 +300,7 @@ public class LDtkExporter
 				var startingFilePosition = (int)writer.BaseStream.Position;
 
 				charData?.Clear();
-				formatter?.StartNewLine();
+				formatter?.StartNewRow();
 
 				for (var y = 0; y < character.IndexedImage.Height; y++)
 				{

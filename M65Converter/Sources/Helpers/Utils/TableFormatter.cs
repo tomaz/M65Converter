@@ -7,6 +7,13 @@ namespace M65Converter.Sources.Helpers.Utils;
 /// </summary>
 public class TableFormatter
 {
+	private readonly static string SeparatorRow = "----------";
+
+	/// <summary>
+	/// Optional left header value. If not provided, it remains empty.
+	/// </summary>
+	public string? LeftHeader { get; init; }
+
 	/// <summary>
 	/// Optional header values. If not provided, column indexes will be used.
 	/// </summary>
@@ -32,27 +39,79 @@ public class TableFormatter
 	/// </summary>
 	public string Suffix { get; init; } = string.Empty;
 
-	private readonly List<List<Data>> lines = new();
+	private readonly List<RowData> rows = new();
+	private int fileOffset = 0;
+
+	#region Initialization & Disposal
+
+	public static TableFormatter CreateFileFormatter()
+	{
+		return new()
+		{
+			LeftHeader = "Offset",
+			Headers = new[] { "Size", "Hex", "Value", "Description" },
+			Prefix = " ",
+			Suffix = " ",
+		};
+	}
+
+	#endregion
 
 	#region Describing data
 
-	public void StartNewLine()
+	public void StartNewRow(string? description = null)
 	{
-		lines.Add(new List<Data>());
+		rows.Add(new RowData
+		{
+			Description = description ?? FormattedLeftHeader(rows.Count)
+		});
 	}
 
 	public void AppendData(int original, int? modified = null)
 	{
 		// Note the formatted value at this point doesn't take into account prefix and suffix. That's with purpose - we may need to pad the string so all change arrows are aligned which needs to happen before applying prefix.
-		lines.Last().Add(FormattedData(original, modified));
+		rows.Last().Columns.Add(FormattedData(original, modified));
 	}
 
 	public void AppendString(string data)
 	{
-		lines.Last().Add(new Data
+		rows.Last().Columns.Add(new Data
 		{
 			Value = data
 		});
+	}
+
+	#endregion
+
+	#region Describing file format
+
+	public void AddFileFormat(int size, int value, string description)
+	{
+		// Left header is start-end offset.
+		var leftHeader = size == 1
+			? fileOffset.ToString()
+			: $"{fileOffset}-{fileOffset + size - 1}";
+		StartNewRow(leftHeader);
+
+		// First column is size.
+		AppendString($"{size}");
+
+		// Second column is the value. We format is as hex string with enough digits to fit the given size.
+		var hex = Number(hex: true, littleEndian: true, value: value, size: size * 2);
+		AppendString($"${hex}");
+
+		// Third column is value in decimal form.
+		AppendData(value);
+
+		// Last column is description.
+		AppendString(description);
+
+		fileOffset += size;
+	}
+
+	public void AddFileSeparator()
+	{
+		StartNewRow(SeparatorRow);
 	}
 
 	#endregion
@@ -67,19 +126,28 @@ public class TableFormatter
 			var result = new List<string>();
 
 			// Prepares the array of top headers.
-			if (lines.Count == 0) return result;
+			if (rows.Count == 0) return result;
 
 			// Prepare headers for all data columns.
-			var line = lines[0];	// doesn't matter which line, we just need to enumerate all columns
-			for (var i = 0; i < line.Count; i++)
+			var line = rows[0];	// doesn't matter which line, we just need to enumerate all columns
+			for (var i = 0; i < line.Columns.Count; i++)
 			{
 				var header = FormattedHeader(i);
 				result.Add(header);
 			}
 
-			// Append left header (to the end so header indices match data). Left header is always composed of decimal numbers so we use the largest value so we'll later be able to calculate this column length.
+			// Append left header (to the end so header indices match data).
 			// Note: while other values in resulting list are actual headers meant for rendering, this value is just a placeholder!
-			result.Add(FormattedLeftHeader(lines.Count - 1));
+			var longestRowDesc = LeftHeader ?? string.Empty;
+			foreach (var row in rows)
+			{
+				var description = row.IsSeparator ? string.Empty : row.Description;
+				if (description.Length > longestRowDesc.Length)
+				{
+					longestRowDesc = description;
+				}
+			}
+			result.Add(longestRowDesc);
 
 			return result;
 		}
@@ -89,15 +157,15 @@ public class TableFormatter
 			var result = headers.Select(x => new ColumnLength()).ToList();
 
 			// Calculate max length for data columns.
-			for (var y = 0; y < lines.Count; y++)
+			for (var y = 0; y < rows.Count; y++)
 			{
-				var line = lines[y];
+				var row = rows[y];
 
-				for (var x = 0; x < line.Count; x++)
+				for (var x = 0; x < row.Columns.Count; x++)
 				{
 					// For column lengths we take into account data prefix and suffix.
 					var header = headers[x];
-					var data = line[x];
+					var data = row.Columns[x];
 					var length = result[x];
 
 					var value = PrefixedSuffixedValue(data.Value);
@@ -182,7 +250,7 @@ public class TableFormatter
 			var builder = new StringBuilder();
 
 			// Append empty left header.
-			AppendLeftHeader(builder, columnLengths, "");
+			AppendLeftHeader(builder, columnLengths, LeftHeader ?? string.Empty);
 
 			// Append all data column headers.
 			for (var i = 0; i < columnLengths.Count - 1; i++)
@@ -200,17 +268,24 @@ public class TableFormatter
 
 		void FormatData(List<ColumnLength> columnLengths)
 		{
-			for (var y = 0; y < lines.Count; y++)
+			for (var y = 0; y < rows.Count; y++)
 			{
-				var line = lines[y];
+				var row = rows[y];
+
+				if (row.IsSeparator)
+				{
+					FormatRowSeparator(columnLengths);
+					continue;
+				}
+
 				var builder = new StringBuilder();
 
-				AppendLeftHeader(builder, columnLengths, FormattedLeftHeader(y));
+				AppendLeftHeader(builder, columnLengths, row.Description);
 
-				for (var x = 0; x < line.Count; x++)
+				for (var x = 0; x < row.Columns.Count; x++)
 				{
 					var columnLength = columnLengths[x];
-					var value = line[x];
+					var value = row.Columns[x];
 					var data = value.Value;
 
 					// If this is a change, we should left pad the value so that the change indicator is aligned for the column. Note how we use original length to determine the amount of padding (we don't want to pad if modified value is the one that's lengthier).
@@ -281,16 +356,7 @@ public class TableFormatter
 	{
 		// Note: hex formatting will use big-endian. The reason is it can save 1 char in logs per value. However 1 char per column is multiplied by number of columns, so the overall "save" can be significant, mainly as it can be the difference for console line wrapping or not (no wrapping = much more readable at glance). The downside is the value will look different than the actual one (which is in fact saved as little-endian). For example: $801 only uses 3 letters ("$" is not logged) in big endian ("801"), but it would require 4 in little endian ("0108"). Can see this being argued, but so far I think the pros outweight the cons.
 		// BUT: it's possible to circumvent and have little-endian format simply by reversing the bytes in the value!
-		var result = IsHex
-			? value.ToString("X")
-			: value.ToString();
-
-		while (result.Length < MinValueLength)
-		{
-			result = "0" + result;
-		}
-
-		return result;
+		return Number(hex: IsHex, littleEndian: false, value: value, size: MinValueLength);
 	}
 
 	private string FormattedHeader(int index)
@@ -315,9 +381,44 @@ public class TableFormatter
 		return Prefix + value + Suffix;
 	}
 
+	private static string Number(bool hex, bool littleEndian, int value, int size)
+	{
+		var result = hex
+			? value.ToString("X")
+			: value.ToString();
+
+		while (result.Length < size)
+		{
+			result = "0" + result;
+		}
+
+		if (littleEndian && size >= 4 && size % 2 == 0)
+		{
+			// We only convert endianess when we have sizes of 4, 6, 8 etc
+			var temp = string.Empty;
+
+			for (var i = 0; i < result.Length; i += 2)
+			{
+				var next = result.Substring(i, 2);
+				temp = next + temp;
+			}
+
+			result = temp;
+		}
+
+		return result;
+	}
+
 	#endregion
 
 	#region Declarations
+
+	private class RowData
+	{
+		public bool IsSeparator { get => Description == SeparatorRow; }
+		public string Description { get; set; } = null!;
+		public List<Data> Columns { get; } = new();
+	}
 
 	private class Data
 	{
