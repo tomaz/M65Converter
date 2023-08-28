@@ -210,10 +210,6 @@ public class LDtkRunner : BaseRunner
 			row.AddColumn(byte1, byte2);
 		}
 
-		void AddScreenDelimiterBytes(ExportLevelData.Row row)
-		{
-		}
-
 		void AddColourBytes(ExportLevelData.Row row, int index, ImageData data)
 		{
 			switch (Options.CharColour)
@@ -259,12 +255,45 @@ public class LDtkRunner : BaseRunner
 			}
 		}
 
-		void AddColourDelimiterBytes(ExportLevelData.Row row)
+		void AddScreenDelimiterBytes(ExportLevelData.Row row)
 		{
+			// Byte 0 is lower 8 bits of new X position for upcoming layer. We set it to 0 which means "render over the top of left-most character".
+			byte byte1 = 0;
+
+			// Byte 1:
+			//              +-------------- FCM char Y offset
+			//              |  +----------- reserved
+			//              |  |  +-------- upper 2 bits of X position
+			//             /-\/+\|\
+			byte byte2 = 0b00000000;
+
+			row.AddColumn(byte1, byte2);
 		}
 
-		foreach (var layer in MergedLayers.Layers)
+		void AddColourDelimiterBytes(ExportLevelData.Row row)
 		{
+			// Byte 0:
+			//             +-------------- 1 = don't draw transparent pixels
+			//             |+------------- 1 = render following chars as background (sprites appear above)
+			//             ||+------------ reserved
+			//             |||+----------- GOTOX
+			//             ||||+---------- 1 = use pixel row mask from byte2 
+			//             |||||+--------- 1 = render following chars as foreground (sprites appear behind)
+			//             |||||| +------- reserved
+			//             |||||| |
+			//             ||||||/\
+			byte byte1 = 0b10010000;
+
+			// Byte 1 = pixel row mask.
+			byte byte2 = 0x00;
+
+			row.AddColumn(byte1, byte2);
+		}
+
+		for (var i = 0; i < MergedLayers.Layers.Count; i++)
+		{
+			var layer = MergedLayers.Layers[i];
+
 			// Adjust width and height of exported layers.
 			if (layer.IndexedImage.Width > ExportData.LayerWidth) ExportData.LayerWidth = layer.IndexedImage.Width;
 			if (layer.IndexedImage.Height > ExportData.LayerHeight) ExportData.LayerHeight = layer.IndexedImage.Height;
@@ -280,7 +309,7 @@ public class LDtkRunner : BaseRunner
 				var colourRow = colour.Rows[y];
 
 				// We must insert GOTOX delimiters between layers.
-				if (y > 0)
+				if (i > 0)
 				{
 					AddScreenDelimiterBytes(screenRow);
 					AddColourDelimiterBytes(colourRow);
@@ -496,8 +525,8 @@ public class LDtkRunner : BaseRunner
 		{
 			var charSize = Options.CharInfo.PixelDataSize;
 
-			var layerWidth = ExportData.LayerWidth;
-			var layerHeight = ExportData.LayerHeight;
+			var layerWidth = ExportData.Screen.Width;
+			var layerHeight = ExportData.Screen.Height;
 			var layerSizeChars = layerWidth * layerHeight;
 			var layerSizeBytes = layerSizeChars * charSize;
 			var layerRowSize = layerWidth * charSize;
@@ -712,6 +741,16 @@ public class LDtkRunner : BaseRunner
 		/// </summary>
 		public class Layer
 		{
+			/// <summary>
+			/// Layer width in characters.
+			/// </summary>
+			public int Width { get => Rows.First().Columns.Count; }
+
+			/// <summary>
+			/// Layer height in characters (this is convenience so we can treat height the same way as width instead of having to use rows count - even though this is in fact simple rows count).
+			/// </summary>
+			public int Height { get => Rows.Count; }
+
 			/// <summary>
 			/// All rows of the data.
 			/// </summary>
