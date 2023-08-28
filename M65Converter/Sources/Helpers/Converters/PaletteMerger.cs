@@ -1,5 +1,6 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Helpers.Converters.Palette;
+using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Helpers.Converters;
 
@@ -54,9 +55,14 @@ public abstract class PaletteMerger
 	/// </summary>
 	public List<Argb32> Merge()
 	{
+		Logger.Verbose.Separator();
+		Logger.Debug.Message("Merging palette");
+
 		var result = new List<Argb32>();
 
 		OnMerge(Options.Images, result);
+
+		Logger.Debug.Message($"{result.Count} palette colours used");
 
 		return result;
 	}

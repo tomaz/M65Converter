@@ -2,8 +2,6 @@
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Utils;
 
-using System;
-
 using static M65Converter.Sources.Helpers.Images.ImageExtensions;
 
 namespace M65Converter.Sources.Helpers.Converters.Palette;

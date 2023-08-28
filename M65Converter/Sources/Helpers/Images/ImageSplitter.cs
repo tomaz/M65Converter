@@ -122,8 +122,19 @@ public class ImageSplitter
 
 	public class SplitResult
 	{
+		/// <summary>
+		/// Source image represented as character indices.
+		/// </summary>
 		public IndexedImage IndexedImage { get; set; } = new();
+
+		/// <summary>
+		/// Number of characters detected.
+		/// </summary>x
 		public int ParsedCount { get; set; }
+
+		/// <summary>
+		/// Number of new characters added to container.
+		/// </summary>
 		public int AddedCount { get; set; }
 	}
 
