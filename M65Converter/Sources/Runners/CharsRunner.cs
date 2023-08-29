@@ -15,7 +15,7 @@ namespace M65Converter.Sources.Runners;
 /// <summary>
 /// Parses LDtk simplified output into mega 65 compatible files
 /// </summary>
-public class LDtkRunner : BaseRunner
+public class CharsRunner : BaseRunner
 {
 	private OptionsType Options { get; set; } = null!;
 	private ImagesContainer CharsContainer { get; } = new();
@@ -542,6 +542,7 @@ public class LDtkRunner : BaseRunner
 			Logger.Verbose.Message("Format (hex values in little endian):");
 			if (Logger.Verbose.IsEnabled)
 			{
+				// Character info.
 				var formatter = TableFormatter.CreateFileFormatter();
 
 				writer.Write((byte)charSize);
@@ -550,6 +551,7 @@ public class LDtkRunner : BaseRunner
 				writer.Write((byte)0xff);
 				formatter.AddFileFormat(size: 1, value: 0xff, description: "Unused");
 
+				// Layer info.
 				formatter.AddFileSeparator();
 				
 				writer.Write((ushort)layerWidth);
@@ -567,6 +569,7 @@ public class LDtkRunner : BaseRunner
 				writer.Write((uint)layerSizeBytes);
 				formatter.AddFileFormat(size: 4, value: layerSizeBytes, description: "Layer size in bytes (width * height * char size)");
 
+				// Screen info.
 				for (var i = 0; i < screenColumns.Length; i++)
 				{
 					var columns = screenColumns[i];
@@ -1064,14 +1067,14 @@ public class LDtkRunner : BaseRunner
 		protected override Command OnCreateCommand()
 		{
 			return new Command(
-				name: "ldtk",
-				description: "Converts simplified LDtk output into raw data"
+				name: "chars",
+				description: "Converts simplified LDtk export or Aseprite file into characters data"
 			);
 		}
 
 		protected override BaseRunner OnCreateRunner(OptionsType options)
 		{
-			return new LDtkRunner
+			return new CharsRunner
 			{
 				Options = options,
 			};

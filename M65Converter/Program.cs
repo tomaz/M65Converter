@@ -9,7 +9,7 @@ Command CreateRootCommand()
 	var result = new RootCommand(description: "Converter for various mega 65 related files");
 
 	result.AddGlobalOption(GlobalOptions.VerbosityOption);
-	result.AddCommand(new LDtkRunner.OptionsBinder().CreateCommand());
+	result.AddCommand(new CharsRunner.OptionsBinder().CreateCommand());
 
 	return result;
 }
