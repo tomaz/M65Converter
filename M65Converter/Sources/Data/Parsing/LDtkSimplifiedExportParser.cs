@@ -46,6 +46,7 @@ public class LDtkSimplifiedExportParser
 			return new LayerData
 			{
 				Path = path,
+				Name = Path.GetFileNameWithoutExtension(filename),
 				Image = image
 			};
 		});

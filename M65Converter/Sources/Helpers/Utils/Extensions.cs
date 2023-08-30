@@ -1,4 +1,6 @@
-﻿namespace M65Converter.Sources.Helpers.Utils;
+﻿using System.Text;
+
+namespace M65Converter.Sources.Helpers.Utils;
 
 public static class Extensions
 {
@@ -14,5 +16,21 @@ public static class Extensions
 		var hi = value >> 4;
 		var low = (value & 0x0f);
 		return (byte)((low << 4) | hi);
+	}
+
+	/// <summary>
+	/// Converts this value to string that can be used to measure maximum width.
+	/// </summary>
+	public static string ToMeasureString(this int value, char digit = '8')
+	{
+		var result = new StringBuilder();
+
+		var text = value.ToString();
+		for (var i = 0; i < text.Length; i++)
+		{
+			result.Append(digit);
+		}
+
+		return result.ToString();
 	}
 }

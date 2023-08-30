@@ -86,6 +86,11 @@ public class LevelData
 		public string Path { get; set; } = null!;
 
 		/// <summary>
+		/// Name of this layer - depending the source, could be the file name of the source image for example.
+		/// </summary>
+		public string Name { get; set; } = null!;
+
+		/// <summary>
 		/// Layer bitmap image.
 		/// </summary>
 		public Image<Argb32> Image { get; set; } = null!;

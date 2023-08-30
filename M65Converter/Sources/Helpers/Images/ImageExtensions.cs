@@ -10,6 +10,38 @@ public static class ImageExtensions
 	#region Images
 
 	/// <summary>
+	/// Draws the given image at the given destination rectangle.
+	/// </summary>
+	public static void DrawImageAt(this IImageProcessingContext context, Image<Argb32> image, Rectangle destination)
+	{
+		var imageToDraw = image;
+
+		// If needed we need to scale the image to fit destination.
+		if (image.Width != destination.Width || image.Height != destination.Height)
+		{
+			imageToDraw = new Image<Argb32>(image.Width, image.Height);
+
+			// Draw original image over the new one.
+			imageToDraw.Mutate(mutator => mutator.DrawImage(image, 1f));
+
+			// Resize image to fit desired size.
+			imageToDraw.Mutate(mutator => mutator.Resize
+			(
+				width: destination.Width,
+				height: destination.Height,
+				sampler: KnownResamplers.NearestNeighbor
+			));
+		}
+
+		// Draw the image into the given destination.
+		context.DrawImage(
+			image: imageToDraw,
+			location: new Point(destination.X, destination.Y),
+			opacity: 1f
+		);
+	}
+
+	/// <summary>
 	/// Draws a pixel into the given image processing context.
 	/// </summary>
 	public static void SetPixel(this IImageProcessingContext context, Color colour, int x, int y)
@@ -39,7 +71,7 @@ public static class ImageExtensions
 
 		return true;
 	}
-
+	
 	#endregion
 
 	#region Indexed images
@@ -177,11 +209,33 @@ public static class ImageExtensions
 	#region Colours
 
 	/// <summary>
+	/// Creates a new colour using the same RGB components but given alpha.
+	/// </summary>
+	public static Argb32 WithAlpha(this Argb32 colour, int alpha)
+	{
+		return new Argb32(r: colour.R, g: colour.G, b: colour.B, a: (byte)alpha);
+	}
+
+	/// <summary>
 	/// Determines if this colour is fully transparent.
 	/// </summary>
 	public static bool IsTransparent(this Argb32 colour)
 	{
 		return colour.A == 0;
+	}
+
+	/// <summary>
+	/// Determines if the colour is dark (result is true) or light (result is false).
+	/// </summary>
+	public static bool IsDark(this Argb32 color)
+	{
+		var r = (double)color.R;
+		var g = (double)color.G;
+		var b = (double)color.B;
+
+		var brightness = Math.Sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+
+		return brightness < 127.5;
 	}
 
 	#endregion

@@ -1,14 +1,10 @@
-﻿using M65Converter.Sources.Helpers.Utils;
-
-namespace M65Converter.Sources.Data.Intermediate;
+﻿namespace M65Converter.Sources.Data.Intermediate;
 
 /// <summary>
 /// Container for <see cref="ImageData"/>.
 /// </summary>
 public class ImagesContainer
 {
-	private List<ImageData> images = new();
-
 	/// <summary>
 	/// Global palette. Must be assigned from outside class after merging colours.
 	/// </summary>
@@ -28,6 +24,8 @@ public class ImagesContainer
 	/// Returns the index of the transparent item.
 	/// </summary>
 	public int TransparentImageIndex { get; private set; }
+
+	private List<ImageData> images = new();
 
 	#region Adding images
 

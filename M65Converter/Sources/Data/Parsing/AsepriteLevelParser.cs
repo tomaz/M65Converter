@@ -20,7 +20,8 @@ public class AsepriteLevelParser
 		var frame = aseprite.GeneratedFrames.First();
 		var layers = frame.LayerImages.Select((x, i) => new LevelData.LayerData
 		{
-			Path = $"{path} [{frame.LayerNames[i]}]",
+			Path = path,
+			Name = frame.LayerNames[i],
 			Image = x,
 		});
 

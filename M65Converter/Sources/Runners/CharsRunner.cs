@@ -1,7 +1,8 @@
 ﻿using M65Converter.Runners;
 using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Models;
-using M65Converter.Sources.Exporting;
+using M65Converter.Sources.Exporting.Images;
+using M65Converter.Sources.Exporting.Utils;
 using M65Converter.Sources.Helpers.Converters;
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Inputs;
@@ -20,7 +21,7 @@ public class CharsRunner : BaseRunner
 	private OptionsType Options { get; set; } = null!;
 	private ImagesContainer CharsContainer { get; } = new();
 	private LevelData MergedLayers { get; set; } = null!;
-	private ExportLevelData ExportData { get; } = new();
+	private LayersData ExportData { get; } = new();
 
 	#region Overrides
 
@@ -28,11 +29,11 @@ public class CharsRunner : BaseRunner
 	{
 		base.OnValidate();
 
-		if ((Options.CharsBaseAddress % Options.CharInfo.CharDataSize) != 0)
+		if ((Options.CharsBaseAddress % Options.CharData.CharDataSize) != 0)
 		{
-			var prev = (Options.CharsBaseAddress / Options.CharInfo.CharDataSize) * Options.CharInfo.CharDataSize;
-			var next = prev + Options.CharInfo.CharDataSize;
-			throw new ArgumentException($"Char base address must start on {Options.CharInfo.CharDataSize} byte boundary. C" +
+			var prev = (Options.CharsBaseAddress / Options.CharData.CharDataSize) * Options.CharData.CharDataSize;
+			var next = prev + Options.CharData.CharDataSize;
+			throw new ArgumentException($"Char base address must start on {Options.CharData.CharDataSize} byte boundary. C" +
 				$"For example ${prev:X} or ${next:X}");
 		}
 	}
@@ -55,6 +56,7 @@ public class CharsRunner : BaseRunner
 		ExportCharsData();
 		ExportPaletteData();
 		ExportLayerInfo();
+		ExportInfoImage();
 	}
 
 	#endregion
@@ -80,8 +82,8 @@ public class CharsRunner : BaseRunner
 			// For base characters we keep all transparents to achieve consistent results. With these characters it's responsibility of the creator to trim source image. Same for duplicates, we want to leave all characters to preserve positions, however when matching them on layers, it will always take the first match.
 			var result = new ImageSplitter
 			{
-				ItemWidth = Options.CharInfo.Width,
-				ItemHeight = Options.CharInfo.Height,
+				ItemWidth = Options.CharData.Width,
+				ItemHeight = Options.CharData.Height,
 				TransparencyOptions = TransparencyOptionsType.KeepAll,
 				DuplicatesOptions = DuplicatesOptionsType.KeepAll
 			}
@@ -115,8 +117,8 @@ public class CharsRunner : BaseRunner
 		{
 			// Add fully transparent character if we don't yet have one. We need to have at least one fully transparent character so that we can properly setup indexed layers that contain transparent characters. If we already have transparent character (either from base characters set, or from previous layers), this will not create additional one.
 			var transparentCharAddResult = CharsContainer.AddTransparentImage(
-				width: Options.CharInfo.Width,
-				height: Options.CharInfo.Height
+				width: Options.CharData.Width,
+				height: Options.CharData.Height
 			);
 
 			foreach (var layer in MergedLayers.Layers)
@@ -134,8 +136,8 @@ public class CharsRunner : BaseRunner
 				// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
 				var result = new ImageSplitter
 				{
-					ItemWidth = Options.CharInfo.Width,
-					ItemHeight = Options.CharInfo.Height,
+					ItemWidth = Options.CharData.Width,
+					ItemHeight = Options.CharData.Height,
 					TransparencyOptions = TransparencyOptionsType.OpaqueOnly,
 					DuplicatesOptions = DuplicatesOptionsType.UniqueOnly
 				}
@@ -196,21 +198,32 @@ public class CharsRunner : BaseRunner
 	/// </summary>
 	private void PrepareExportData()
 	{
-		var screen = new ExportLevelData.Layer();
-		var colour = new ExportLevelData.Layer();
+		var screen = new LayersData.Layer();
+		var colour = new LayersData.Layer();
 
-		void AddScreenBytes(ExportLevelData.Row row, int index, ImageData data)
+		string? layerName = null;
+		LayersData.Column.DataType dataType;
+
+		void AddScreenBytes(LayersData.Row row, int index, ImageData data)
 		{
-			var charIndex = Options.CharIndexInRam(index);
+			var charAddress = Options.CharIndexInRam(index);
 
 			// Char index is always the same regardless of mode.
-			byte byte1 = (byte)(charIndex & 0xff);
-			byte byte2 = (byte)((charIndex >> 8) & 0xff);
+			byte byte1 = (byte)(charAddress & 0xff);
+			byte byte2 = (byte)((charAddress >> 8) & 0xff);
 
-			row.AddColumn(byte1, byte2);
+			var column = row.AddColumn(byte1, byte2);
+
+			// Assign data type and layer name.
+			column.Tag = layerName;
+			column.Type = dataType;
+
+			// For chars data1 is char index, data2 is "index in ram" or "address" (of sorts).
+			column.Data1 = index;
+			column.Data2 = charAddress;
 		}
 
-		void AddColourBytes(ExportLevelData.Row row, int index, ImageData data)
+		void AddColourBytes(LayersData.Row row, int index, ImageData data)
 		{
 			switch (Options.CharColour)
 			{
@@ -249,13 +262,22 @@ public class CharsRunner : BaseRunner
 					// No sure why colour bank needs to be in high nibble. According to documentation this is needed if VIC II multi-colour-mode is enabled, however in my code this is also needed if VIC III extended attributes are enabled (AND VIC II MCM is disabled).
 					byte2 = byte2.SwapNibble();
 
-					row.AddColumn(byte1, byte2);
+					var column = row.AddColumn(byte1, byte2);
+
+					// Assign data type and layer name.
+					column.Tag = layerName;
+					column.Type = dataType;
+
+					// For colours data1 represents colour bank (only meaningful for NCM).
+					column.Type = dataType;
+					column.Data1 = data.IndexedImage.Bank;
+
 					break;
 				}
 			}
 		}
 
-		void AddScreenDelimiterBytes(ExportLevelData.Row row)
+		void AddScreenDelimiterBytes(LayersData.Row row)
 		{
 			// Byte 0 is lower 8 bits of new X position for upcoming layer. We set it to 0 which means "render over the top of left-most character".
 			byte byte1 = 0;
@@ -267,10 +289,11 @@ public class CharsRunner : BaseRunner
 			//             /-\/+\|\
 			byte byte2 = 0b00000000;
 
-			row.AddColumn(byte1, byte2);
+			var column = row.AddColumn(byte1, byte2);
+			column.Type = LayersData.Column.DataType.Attribute;
 		}
 
-		void AddColourDelimiterBytes(ExportLevelData.Row row)
+		void AddColourDelimiterBytes(LayersData.Row row)
 		{
 			// Byte 0:
 			//             +-------------- 1 = don't draw transparent pixels
@@ -287,12 +310,24 @@ public class CharsRunner : BaseRunner
 			// Byte 1 = pixel row mask.
 			byte byte2 = 0x00;
 
-			row.AddColumn(byte1, byte2);
+			var column = row.AddColumn(byte1, byte2);
+			column.Type = LayersData.Column.DataType.Attribute;
 		}
 
 		for (var i = 0; i < MergedLayers.Layers.Count; i++)
 		{
 			var layer = MergedLayers.Layers[i];
+
+			// Setup layer name and data type - the first column we'll add is marked as "first data" for later handling.
+			layerName = layer.Name;
+			dataType = LayersData.Column.DataType.FirstData;
+
+			// First layer name is assigned to our one-and-only result layer, for both, screen and colour data.
+			if (i == 0)
+			{
+				screen.Name = layerName;
+				colour.Name = layerName;
+			}
 
 			// Adjust width and height of exported layers.
 			if (layer.IndexedImage.Width > ExportData.LayerWidth) ExportData.LayerWidth = layer.IndexedImage.Width;
@@ -323,6 +358,10 @@ public class CharsRunner : BaseRunner
 
 					AddScreenBytes(screenRow, charIndex, charData);
 					AddColourBytes(colourRow, charIndex, charData);
+
+					// After adding data at (0,0) of each layer, switch to normal data type and reset layer name.
+					dataType = LayersData.Column.DataType.Data;
+					layerName = null;
 				}
 			}
 		}
@@ -343,7 +382,7 @@ public class CharsRunner : BaseRunner
 		CreateExporter("colour ram", "colour.bin").Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option($"Each colour is {Options.CharInfo.PixelDataSize} bytes");
+			Logger.Verbose.Option($"Each colour is {Options.CharData.PixelDataSize} bytes");
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 			var formatter = Logger.Verbose.IsEnabled
@@ -387,7 +426,7 @@ public class CharsRunner : BaseRunner
 			Logger.Verbose.Option($"Expected to be copied to memory address ${Options.CharsBaseAddress:X}");
 			Logger.Verbose.Option($"Char start index {Options.CharIndexInRam(0)} (${Options.CharIndexInRam(0):X})");
 			Logger.Verbose.Option("All pixels as char indices");
-			Logger.Verbose.Option($"Each pixel is {Options.CharInfo.PixelDataSize} bytes");
+			Logger.Verbose.Option($"Each pixel is {Options.CharData.PixelDataSize} bytes");
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 			var formatter = Logger.Verbose.IsEnabled
@@ -442,14 +481,14 @@ public class CharsRunner : BaseRunner
 			}
 			Logger.Verbose.Option("All pixels as palette indices");
 			Logger.Verbose.Option("Top-to-down, left-to-right order");
-			Logger.Verbose.Option($"Character size is {Options.CharInfo.CharDataSize} bytes");
+			Logger.Verbose.Option($"Character size is {Options.CharData.CharDataSize} bytes");
 
 			var charData = Logger.Verbose.IsEnabled ? new List<byte>() : null;
 			var formatter = Logger.Verbose.IsEnabled
 				? new TableFormatter
 				{
 					IsHex = true,
-					Headers = new[] { "Address", "Index", $"Data ({Options.CharInfo.CharDataSize} bytes)" },
+					Headers = new[] { "Address", "Index", $"Data ({Options.CharData.CharDataSize} bytes)" },
 					Prefix = " $",
 					Suffix = " "
 				}
@@ -523,7 +562,7 @@ public class CharsRunner : BaseRunner
 	{
 		CreateExporter("layer info", "layer.inf").Export(writer =>
 		{
-			var charSize = Options.CharInfo.PixelDataSize;
+			var charSize = Options.CharData.PixelDataSize;
 
 			var layerWidth = ExportData.Screen.Width;
 			var layerHeight = ExportData.Screen.Height;
@@ -534,8 +573,8 @@ public class CharsRunner : BaseRunner
 			var screenColumns = new[] { 40, 80 };
 			var screenCharColumns = new[]
 			{
-				Options.CharInfo.CharsPerScreenWidth40Columns,
-				Options.CharInfo.CharsPerScreenWidth80Columns,
+				Options.CharData.CharsPerScreenWidth40Columns,
+				Options.CharData.CharsPerScreenWidth80Columns,
 			};
 
 			Logger.Verbose.Separator();
@@ -574,7 +613,7 @@ public class CharsRunner : BaseRunner
 				{
 					var columns = screenColumns[i];
 					var width = screenCharColumns[i];
-					var height = Options.CharInfo.CharsPerScreenHeight;	// height is always the same
+					var height = Options.CharData.CharsPerScreenHeight;	// height is always the same
 
 					formatter.AddFileSeparator();
 
@@ -596,6 +635,24 @@ public class CharsRunner : BaseRunner
 
 				formatter.Log(Logger.Verbose.Option);
 			}
+		});
+	}
+
+	private void ExportInfoImage()
+	{
+		if (Options.InfoRenderingScale <= 0) return;
+
+		CreateExporter("info image", "info.png").Prepare(path =>
+		{
+			new CharsImageExporter
+			{
+				Scale = Options.InfoRenderingScale,
+				LayersData = ExportData,
+				CharsContainer = CharsContainer,
+				CharInfo = Options.CharData,
+				CharsBaseAddress = Options.CharsBaseAddress
+			}
+			.Draw(path);
 		});
 	}
 
@@ -657,14 +714,19 @@ public class CharsRunner : BaseRunner
 		Logger.Debug.Option(string.Join("", new string[]
 		{
 			$"Character type: {Options.CharColour} (",
-			$"{Options.CharInfo.Width}x{Options.CharInfo.Height} pixels, ",
-			$"{Options.CharInfo.ColoursPerChar} colours per character)"
+			$"{Options.CharData.Width}x{Options.CharData.Height} pixels, ",
+			$"{Options.CharData.ColoursPerChar} colours per character)"
 		}));
 
-		Logger.Debug.Option($"Character size: {Options.CharInfo.PixelDataSize} bytes");
+		Logger.Debug.Option($"Character size: {Options.CharData.PixelDataSize} bytes");
 
 		var firstChar = Options.CharIndexInRam(0);
 		Logger.Debug.Option($"Characters base address: ${Options.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");
+
+		if (Options.InfoRenderingScale > 0)
+		{
+			Logger.Debug.Option($"Info image scaled at {Options.InfoRenderingScale}x will be generated");
+		}
 	}
 
 	/// <summary>
@@ -683,158 +745,6 @@ public class CharsRunner : BaseRunner
 		{
 			throw new ArgumentException("Too many palette entries, adjust source files to use less colours");
 		}
-	}
-
-	/// <summary>
-	/// Enumerates level data and calls the given action for each coordinate.
-	/// 
-	/// If raster-rewrite-buffer is used, this will iterate over all layers in correct order for example.
-	/// </summary>
-	private void EnumerateLevelData(Action<int, int> handler)
-	{
-		var y = 0;
-		var x = 0;
-	}
-
-	#endregion
-
-	#region Declarations
-
-	private class ExportLevelData
-	{
-		/// <summary>
-		/// The width of the longest layer.
-		/// </summary>
-		public int LayerWidth { get; set; }
-
-		/// <summary>
-		/// The height of the tallest layer.
-		/// </summary>
-		public int LayerHeight { get; set; }
-
-		/// <summary>
-		/// Level name.
-		/// </summary>
-		public string LevelName { get; set; } = null!;
-
-		/// <summary>
-		/// Root folder where level source files are located.
-		/// </summary>
-		public string RootFolder { get; set; } = null!;
-
-		/// <summary>
-		/// The screen RAM data.
-		/// </summary>
-		public Layer Screen { get; set; } = new();
-
-		/// <summary>
-		/// The colour RAM data.
-		/// </summary>
-		public Layer Colour { get; set; } = new();
-
-		/// <summary>
-		/// All colours.
-		/// </summary>
-		public List<Argb32> Palette { get; set; } = new();
-
-		#region Declarations
-
-		/// <summary>
-		/// The "data" - this can be anything that uses rows and columns format.
-		/// </summary>
-		public class Layer
-		{
-			/// <summary>
-			/// Layer width in characters.
-			/// </summary>
-			public int Width { get => Rows.First().Columns.Count; }
-
-			/// <summary>
-			/// Layer height in characters (this is convenience so we can treat height the same way as width instead of having to use rows count - even though this is in fact simple rows count).
-			/// </summary>
-			public int Height { get => Rows.Count; }
-
-			/// <summary>
-			/// All rows of the data.
-			/// </summary>
-			public List<Row> Rows { get; } = new();
-		}
-
-		/// <summary>
-		/// Data for individual row.
-		/// </summary>
-		public class Row
-		{
-			/// <summary>
-			/// All columns of this row.
-			/// </summary>
-			public List<Column> Columns { get; } = new();
-
-			/// <summary>
-			/// Convenience for adding a new <see cref="Column"/> with the given values to the end of <see cref="Columns"/> list.
-			/// </summary>
-			/// <param name="values"></param>
-			public void AddColumn(params byte[] values)
-			{
-				Columns.Add(new()
-				{
-					Values = values.ToList()
-				});
-			}
-		}
-
-		/// <summary>
-		/// Data for individual column.
-		/// </summary>
-		public class Column
-		{
-			/// <summary>
-			/// All bytes needed to describe this column, in little endian format.
-			/// </summary>
-			public List<byte> Values { get; init; } = new();
-
-			/// <summary>
-			/// Returns all values as single little endian value (only supports up to 4 bytes!)
-			/// </summary>
-			public int LittleEndianData
-			{
-				get
-				{
-					var result = 0;
-
-					// Values are already in little endian order.
-					foreach (var value in Values)
-					{
-						result <<= 8;
-						result |= value;
-					}
-
-					return result;
-				}
-			}
-
-			/// <summary>
-			/// Returns all values as single big endian value (only supports up to 4 digits!)
-			/// </summary>
-			public int BigEndianData
-			{
-				get
-				{
-					var result = 0;
-
-					// Values are little endian order, so we need to reverse the array.
-					for (var i = Values.Count - 1; i >= 0; i--)
-					{
-						result <<= 8;
-						result |= Values[i];
-					}
-
-					return result;
-				}
-			}
-		}
-
-		#endregion
 	}
 
 	#endregion
@@ -894,7 +804,12 @@ public class CharsRunner : BaseRunner
 		public int CharsBaseAddress { get; set; }
 
 		/// <summary>
-		/// Tile type. Changing this value will change <see cref="CharInfo"/> as well.
+		/// Specifies the scale at which info image should be rendered. If less than or equal to 0, info image is not generated.
+		/// </summary>
+		public int InfoRenderingScale { get; set; }
+
+		/// <summary>
+		/// Tile type. Changing this value will change <see cref="CharData"/> as well.
 		/// </summary>
 		public CharColourType CharColour {
 			get => _charColour;
@@ -909,12 +824,12 @@ public class CharsRunner : BaseRunner
 		/// <summary>
 		/// Tile information, depends on <see cref="CharColour"/>.
 		/// </summary>
-		public CharInfoType CharInfo {
+		public CharInfo CharData {
 			get
 			{
 				_charInfo ??= CharColour switch
 				{
-					CharColourType.FCM => new CharInfoType
+					CharColourType.FCM => new CharInfo
 					{
 						Width = 8,
 						Height = 8,
@@ -924,7 +839,7 @@ public class CharsRunner : BaseRunner
 						CharsPerScreenWidth80Columns = 80,
 					},
 
-					CharColourType.NCM => new CharInfoType
+					CharColourType.NCM => new CharInfo
 					{
 						Width = 16,
 						Height = 8,
@@ -940,17 +855,14 @@ public class CharsRunner : BaseRunner
 				return _charInfo!;
 			}
 		}
-		private CharInfoType? _charInfo = null;
+		private CharInfo? _charInfo = null;
 
 		#region Helpers
 
 		/// <summary>
 		/// Takes "relative" character index (0 = first generated character) and converts it to absolute character index as needed for Mega 65 hardware, taking into condideration char base address.
 		/// </summary>
-		public int CharIndexInRam(int relativeIndex)
-		{
-			return (CharsBaseAddress + relativeIndex * CharInfo.CharDataSize) / CharInfo.CharDataSize;
-		}
+		public int CharIndexInRam(int relativeIndex) => CharData.CharIndexInRam(CharsBaseAddress, relativeIndex);
 
 		#endregion
 
@@ -960,49 +872,6 @@ public class CharsRunner : BaseRunner
 		{
 			FCM,
 			NCM
-		}
-
-		public class CharInfoType
-		{
-			/// <summary>
-			/// Width of the character in pixels.
-			/// </summary>
-			public int Width { get; init; }
-
-			/// <summary>
-			/// Height of character in pixels.
-			/// </summary>
-			public int Height { get; init; }
-
-			/// <summary>
-			/// Number of bytes each pixel requires.
-			/// </summary>
-			public int PixelDataSize { get; init; }
-
-			/// <summary>
-			/// Number of bytes each character (aka all pixels) require.
-			/// </summary>
-			public int CharDataSize { get; init; }
-
-			/// <summary>
-			/// Number of colours each character can have.
-			/// </summary>
-			public int ColoursPerChar { get; init; }
-
-			/// <summary>
-			/// Number of characters that can be rendered in each line when 80 column mode is used.
-			/// </summary>
-			public int CharsPerScreenWidth80Columns { get; init; }
-
-			/// <summary>
-			/// Number of characters that can be rendered in each line when 40 column mode is used.
-			/// </summary>
-			public int CharsPerScreenWidth40Columns { get => CharsPerScreenWidth80Columns / 2; }
-
-			/// <summary>
-			/// Screen height in characters.
-			/// </summary>
-			public int CharsPerScreenHeight { get => 25; }
 		}
 
 		#endregion
@@ -1060,6 +929,12 @@ public class CharsRunner : BaseRunner
 			getDefaultValue: () => false
 		);
 
+		private Option<int> imageInfoScale = new(
+			name: "--info",
+			description: "Enables info image generation if > 0 (can be quite slow!), otherwise info image is not generated",
+			getDefaultValue: () => 0
+		);
+
 		#endregion
 
 		#region Overrides
@@ -1090,7 +965,8 @@ public class CharsRunner : BaseRunner
 				OutputNameTemplate = bindingContext.ParseResult.GetValueForOption(outputFileTemplate)!,
 				CharsBaseAddress = bindingContext.ParseResult.GetValueForOption(charBaseAddress)!.ParseAsInt(),
 				CharColour = bindingContext.ParseResult.GetValueForOption(tileType),
-				IsRasterRewriteBufferSupported = bindingContext.ParseResult.GetValueForOption(rasterRewriteBuffer)
+				IsRasterRewriteBufferSupported = bindingContext.ParseResult.GetValueForOption(rasterRewriteBuffer),
+				InfoRenderingScale = bindingContext.ParseResult.GetValueForOption(imageInfoScale)
 			};
 		}
 
