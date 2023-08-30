@@ -155,8 +155,8 @@ public class CharsRunner : BaseRunner
 		}
 		.Run(input =>
 		{
-			// Parse LDtk input data.
-			var inputData = LevelData.ParseLDtk(input);
+			// Parse input data.
+			var inputData = LevelData.Parse(input);
 
 			// Prepare all layers we need to extract chars from.
 			MergeLayers(inputData);

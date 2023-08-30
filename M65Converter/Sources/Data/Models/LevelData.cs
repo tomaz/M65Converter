@@ -1,6 +1,5 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Utils;
-using System.Text.Json;
+using M65Converter.Sources.Data.Parsing;
 
 namespace M65Converter.Sources.Data.Models;
 
@@ -37,96 +36,39 @@ public class LevelData
 	#region Initialization & Disposal
 
 	/// <summary>
-	/// Parses LDtk data. Input path can etiher be:
+	/// Parses input. Input path can etiher be:
 	/// 
 	/// - folder: `data.json` file is taken from the folder)
 	/// - JSON file: it's expected to be simplified export JSON data
+	/// - Aseprite file
 	/// 
 	/// Either way, the method creates new <see cref="LevelData"/> instance describing parsed data.
 	/// </summary>
-	public static LevelData ParseLDtk(FileInfo input)
+	public static LevelData Parse(FileInfo input)
 	{
-		// If path is directory search search for `data.json` file in it. Otherwise assume it's `data.json` file (name doesn't matter in this case, as long as the data is in correct format).
-		var dataJsonPath = input.FullName;
-		var attributes = File.GetAttributes(dataJsonPath);
+		// If path is directory search, we assume it's LDtk simplified export so we prepare for `data.json` file in it.
+		var path = input.FullName;
+		var attributes = File.GetAttributes(path);
 		if ((attributes & FileAttributes.Directory) != 0)
 		{
-			dataJsonPath = Path.Combine(dataJsonPath, "data.json");
+			path = Path.Combine(path, "data.json");
 		}
 
-		// Load the data JSON file.
-		Logger.Verbose.Message($"Parsing {Path.GetFileName(dataJsonPath)}");
-		var json = new StreamReader(File.OpenRead(dataJsonPath)).ReadToEnd();
-		var data = JsonSerializer.Deserialize<LDtkJsonData>(json, new JsonSerializerOptions
+		// If path points to a `data.json`, use LDtk parser.
+		if (Path.GetFileName(path) == "data.json")
 		{
-			PropertyNameCaseInsensitive = true
-		});
-
-		// If data is invalid, throw exception and bail out.
-		if (data == null)
-		{
-			throw new InvalidDataException("Failed loading data.json");
+			return new LDtkSimplifiedExportParser().Parse(path);
 		}
 
-		// Load all layer images.
-		Logger.Verbose.Message("Loading layers");
-		var inputPath = Path.GetDirectoryName(dataJsonPath)!;
-		var layers = data.Layers.Select(filename =>
+		// If path points to Aseprite file, use Aseprite parser.
+		var extension = Path.GetExtension(path);
+		if (extension == ".ase" || extension == ".aseprite")
 		{
-			Logger.Verbose.Option($"{filename}");
-
-			var path = Path.Combine(inputPath, filename);
-			var image = Image.Load<Argb32>(path);
-
-			return new LayerData
-			{
-				Path = path,
-				Image = image
-			};
-		});
-
-		// Get additional data.
-		var rootAndLevelName = LevelRootFolder(dataJsonPath);
-
-		// Prepare result.
-		return new LevelData
-		{
-			Width = data.Width,
-			Height = data.Height,
-			LevelName = rootAndLevelName.Item2,
-			RootFolder = rootAndLevelName.Item1,
-			Layers = layers.ToList() ?? new()
-		};
-	}
-
-	#endregion
-
-	#region Helpers
-
-	/// <summary>
-	/// Returns a tuple with:
-	/// 
-	/// - full path to level root folder (where main LDtk json file exists)
-	/// - name of the level
-	/// </summary>
-	private static Tuple<string, string> LevelRootFolder(string dataJsonFilename)
-	{
-		// Get the root folder of the level. Simplified export saves each level into its own folder with data.json file inside "{levelName}/simplified/AutoLayer" subfolder. So we remove 3 folders from layer image file to get to the root where LDtk source file is contained. Note how we dynamically swap source and root folder so that we still can get a valid result if `GetDirectoryName` returns null (aka folder is root).
-		var levelFolder = Path.GetDirectoryName(dataJsonFilename)!;
-		var rootFolder = levelFolder;
-		for (int i = 0; i < 3; i++)
-		{
-			levelFolder = rootFolder;
-			rootFolder = Path.GetDirectoryName(rootFolder);
-			if (rootFolder == null)
-			{
-				rootFolder = levelFolder;
-				break;
-			}
+			return new AsepriteLevelParser().Parse(path);
 		}
 
-		var levelName = new DirectoryInfo(levelFolder!).Name;
-		return new Tuple<string, string>(rootFolder, levelName);
+		// Otherwise we don't know how to parse so throw exception.
+		throw new InvalidDataException($"Unknown input type {path}");
 	}
 
 	#endregion
