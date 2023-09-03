@@ -16,7 +16,13 @@ Command CreateRootCommand()
 
 var result = 0;
 
-new TimeRunner("\r\nTotal ").Run(() =>
+new TimeRunner
+{
+	LoggerFunction = Logger.Info.Message,
+	Header = "",
+	Footer = "\r\nTotal: {Time}"
+}
+.Run(() =>
 {
 	result = CreateRootCommand().Invoke(args);
 });

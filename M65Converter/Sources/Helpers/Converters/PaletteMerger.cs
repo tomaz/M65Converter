@@ -55,7 +55,6 @@ public abstract class PaletteMerger
 	/// </summary>
 	public List<Argb32> Merge()
 	{
-		Logger.Verbose.Separator();
 		Logger.Debug.Message("Merging palette");
 
 		var result = new List<Argb32>();

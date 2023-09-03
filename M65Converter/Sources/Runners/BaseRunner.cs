@@ -16,6 +16,11 @@ public abstract class BaseRunner
 	#region Subclass
 
 	/// <summary>
+	/// Optional title, used as timer header if provided.
+	/// </summary>
+	protected virtual string? Title() => null;
+
+	/// <summary>
 	/// Called before any other override. Subclass should validate it has all required input parameters.
 	/// </summary>
 	protected virtual void OnValidate()
@@ -40,7 +45,13 @@ public abstract class BaseRunner
 
 	public void Run()
 	{
-		new TimeRunner().Run(() =>
+		new TimeRunner
+		{
+			Title = Title(),
+			Header = " ==============================================================================\r\n// ",
+			Footer = "\r\n\\\\ {Time} [{Title}]\r\n =============================================================================="
+		}
+		.Run(() =>
 		{
 			OnValidate();
 			OnSetup();

@@ -8,6 +8,11 @@
 public class InputFilesHandler
 {
 	/// <summary>
+	/// Optional title.
+	/// </summary>
+	public string? Title { get; init; }
+
+	/// <summary>
 	/// The array of all sources - folders or files.
 	/// </summary>
 	public FileInfo[] Sources { get; set; } = null!;
@@ -22,9 +27,19 @@ public class InputFilesHandler
 		foreach (var source in Sources)
 		{
 			Logger.Debug.Separator();
-			Logger.Info.Message($"---> {source}");
 
-			handler(source);
+			var timerTitle = Title != null ? $"{Title} " : "";
+
+			new TimeRunner
+			{
+				Title = $"{timerTitle}{source.Name}"
+			}
+			.Run(() =>
+			{
+				Logger.Info.Message($"{source}");
+
+				handler(source);
+			});
 		}
 	}
 

@@ -25,6 +25,8 @@ public class CharsRunner : BaseRunner
 
 	#region Overrides
 
+	protected override string? Title() => "Parsing layer files";
+
 	protected override void OnValidate()
 	{
 		base.OnValidate();
@@ -70,7 +72,11 @@ public class CharsRunner : BaseRunner
 	{
 		if (Options.BaseCharsImage == null) return;
 
-		new TimeRunner().Run(() =>
+		new TimeRunner
+		{
+			Title = "Base characters"
+		}
+		.Run(() =>
 		{
 			Logger.Debug.Separator();
 			Logger.Info.Message($"---> {Options.BaseCharsImage}");
@@ -124,8 +130,7 @@ public class CharsRunner : BaseRunner
 			foreach (var layer in MergedLayers.Layers)
 			{
 				Logger.Verbose.Separator();
-				Logger.Verbose.Message($"{layer.Path}");
-				Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Path)}");
+				Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Name)}");
 
 				// Log transparent character addition.
 				if (transparentCharAddResult.WasAdded)
@@ -153,6 +158,7 @@ public class CharsRunner : BaseRunner
 		// Parse all input folders.
 		new InputFilesHandler
 		{
+			Title = "Parsing",
 			Sources = Options.Inputs
 		}
 		.Run(input =>
@@ -165,10 +171,10 @@ public class CharsRunner : BaseRunner
 
 			// Add all extra characters from individual layers.
 			AppendExtraCharsFromLayers();
-		});
 
-		Logger.Verbose.Separator();
-		Logger.Debug.Message($"{CharsContainer.Images.Count} characters found");
+			Logger.Verbose.Separator();
+			Logger.Debug.Message($"{CharsContainer.Images.Count} characters found");
+		});
 	}
 
 	#endregion
@@ -180,17 +186,26 @@ public class CharsRunner : BaseRunner
 	/// </summary>
 	private void PrepareExportPalette()
 	{
-		var options = new PaletteMerger.OptionsType
-		{
-			Is4Bit = Options.CharColour == OptionsType.CharColourType.NCM,
-			IsUsingTransparency = true,
-			Images = CharsContainer.Images,
-		};
+		Logger.Debug.Separator();
 
-		// Note: merging not only prepares the final palette for export, but also remaps all character images colours to point to this generated palette.
-		ExportData.Palette = PaletteMerger
-			.Create(options)
-			.Merge();
+		new TimeRunner
+		{
+			Title = "Merging palette"
+		}
+		.Run(() =>
+		{
+			var options = new PaletteMerger.OptionsType
+			{
+				Is4Bit = Options.CharColour == OptionsType.CharColourType.NCM,
+				IsUsingTransparency = true,
+				Images = CharsContainer.Images,
+			};
+
+			// Note: merging not only prepares the final palette for export, but also remaps all character images colours to point to this generated palette.
+			ExportData.Palette = PaletteMerger
+				.Create(options)
+				.Merge();
+		});
 	}
 
 	/// <summary>
@@ -198,179 +213,191 @@ public class CharsRunner : BaseRunner
 	/// </summary>
 	private void PrepareExportData()
 	{
-		var screen = new LayersData.Layer();
-		var colour = new LayersData.Layer();
+		Logger.Debug.Separator();
 
-		string? layerName = null;
-		LayersData.Column.DataType dataType;
-
-		void AddScreenBytes(LayersData.Row row, int index, ImageData data)
+		new TimeRunner
 		{
-			var charAddress = Options.CharIndexInRam(index);
-
-			// Char index is always the same regardless of mode.
-			byte byte1 = (byte)(charAddress & 0xff);
-			byte byte2 = (byte)((charAddress >> 8) & 0xff);
-
-			var column = row.AddColumn(byte1, byte2);
-
-			// Assign data type and layer name.
-			column.Tag = layerName;
-			column.Type = dataType;
-
-			// For chars data1 is char index, data2 is "index in ram" or "address" (of sorts).
-			column.Data1 = index;
-			column.Data2 = charAddress;
+			Title = "Preparing layers data"
 		}
-
-		void AddColourBytes(LayersData.Row row, int index, ImageData data)
+		.Run(() =>
 		{
-			switch (Options.CharColour)
+			var screen = new LayersData.Layer();
+			var colour = new LayersData.Layer();
+
+			string? layerName = null;
+			LayersData.Column.DataType dataType;
+
+			void AddScreenBytes(LayersData.Row row, int index, ImageData data)
 			{
-				case OptionsType.CharColourType.FCM:
-				{
-					// For FCM colours are not important (until we implement char flipping for example), we always use 0.
-					row.AddColumn(0x00, 0x00);
-					break;
-				}
+				var charAddress = Options.CharIndexInRam(index);
 
-				case OptionsType.CharColourType.NCM:
-				{
-					// For NCM colours RAM is where we set FCM mode for the character as well as palette bank.
+				// Char index is always the same regardless of mode.
+				byte byte1 = (byte)(charAddress & 0xff);
+				byte byte2 = (byte)((charAddress >> 8) & 0xff);
 
-					//            +-------------- vertically flip character
-					//            |+------------- horizontally flip character
-					//            ||+------------ alpha blend mode
-					//            |||+----------- gotox
-					//            ||||+---------- use 4-bits per pixel and 16x8 chars
-					//            |||||+--------- trim pixels from right char side
-					//            |||||| +------- number of pixels to trim
-					//            |||||| |
-					//            ||||||-+
-					byte byte1 = 0b00001000;
+				var column = row.AddColumn(byte1, byte2);
 
-					//            +-------------- underline
-					//            |+-------------- bold
-					//            ||+------------- reverse
-					//            |||+------------ blink
-					//            |||| +---------- colour bank 0-16
-					//            |||| |
-					//            ||||-+--
-					byte byte2 = 0b00000000;
-					byte2 |= (byte)(data.IndexedImage.Bank & 0x0f);
+				// Assign data type and layer name.
+				column.Tag = layerName;
+				column.Type = dataType;
 
-					// No sure why colour bank needs to be in high nibble. According to documentation this is needed if VIC II multi-colour-mode is enabled, however in my code this is also needed if VIC III extended attributes are enabled (AND VIC II MCM is disabled).
-					byte2 = byte2.SwapNibble();
-
-					var column = row.AddColumn(byte1, byte2);
-
-					// Assign data type and layer name.
-					column.Tag = layerName;
-					column.Type = dataType;
-
-					// For colours data1 represents colour bank (only meaningful for NCM).
-					column.Type = dataType;
-					column.Data1 = data.IndexedImage.Bank;
-
-					break;
-				}
-			}
-		}
-
-		void AddScreenDelimiterBytes(LayersData.Row row)
-		{
-			// Byte 0 is lower 8 bits of new X position for upcoming layer. We set it to 0 which means "render over the top of left-most character".
-			byte byte1 = 0;
-
-			// Byte 1:
-			//              +-------------- FCM char Y offset
-			//              |  +----------- reserved
-			//              |  |  +-------- upper 2 bits of X position
-			//             /-\/+\|\
-			byte byte2 = 0b00000000;
-
-			var column = row.AddColumn(byte1, byte2);
-			column.Type = LayersData.Column.DataType.Attribute;
-		}
-
-		void AddColourDelimiterBytes(LayersData.Row row)
-		{
-			// Byte 0:
-			//             +-------------- 1 = don't draw transparent pixels
-			//             |+------------- 1 = render following chars as background (sprites appear above)
-			//             ||+------------ reserved
-			//             |||+----------- GOTOX
-			//             ||||+---------- 1 = use pixel row mask from byte2 
-			//             |||||+--------- 1 = render following chars as foreground (sprites appear behind)
-			//             |||||| +------- reserved
-			//             |||||| |
-			//             ||||||/\
-			byte byte1 = 0b10010000;
-
-			// Byte 1 = pixel row mask.
-			byte byte2 = 0x00;
-
-			var column = row.AddColumn(byte1, byte2);
-			column.Type = LayersData.Column.DataType.Attribute;
-		}
-
-		for (var i = 0; i < MergedLayers.Layers.Count; i++)
-		{
-			var layer = MergedLayers.Layers[i];
-
-			// Setup layer name and data type - the first column we'll add is marked as "first data" for later handling.
-			layerName = layer.Name;
-			dataType = LayersData.Column.DataType.FirstData;
-
-			// First layer name is assigned to our one-and-only result layer, for both, screen and colour data.
-			if (i == 0)
-			{
-				screen.Name = layerName;
-				colour.Name = layerName;
+				// For chars data1 is char index, data2 is "index in ram" or "address" (of sorts).
+				column.Data1 = index;
+				column.Data2 = charAddress;
 			}
 
-			// Adjust width and height of exported layers.
-			if (layer.IndexedImage.Width > ExportData.LayerWidth) ExportData.LayerWidth = layer.IndexedImage.Width;
-			if (layer.IndexedImage.Height > ExportData.LayerHeight) ExportData.LayerHeight = layer.IndexedImage.Height;
-
-			for (var y = 0; y < layer.IndexedImage.Height; y++)
+			void AddColourBytes(LayersData.Row row, int index, ImageData data)
 			{
-				// Create new rows if needed. This should only happen during the first height iteration.
-				if (y >= screen.Rows.Count) screen.Rows.Add(new());
-				if (y >= colour.Rows.Count) colour.Rows.Add(new());
-
-				// These two lines are where appending data to rows "happens" - for every subsequent layer we will reiterate the same y coordinates so we'll take existing row classes from the lists.
-				var screenRow = screen.Rows[y];
-				var colourRow = colour.Rows[y];
-
-				// We must insert GOTOX delimiters between layers.
-				if (i > 0)
+				switch (Options.CharColour)
 				{
-					AddScreenDelimiterBytes(screenRow);
-					AddColourDelimiterBytes(colourRow);
-				}
+					case OptionsType.CharColourType.FCM:
+					{
+						// For FCM colours are not important (until we implement char flipping for example), we always use 0.
+						row.AddColumn(0x00, 0x00);
+						break;
+					}
 
-				// Handle all chars of the current row. This will append data to existing rows in RRB mode.
-				for (var x = 0; x < layer.IndexedImage.Width; x++)
-				{
-					var charIndex = layer.IndexedImage[x, y];
-					var charData = CharsContainer.Images[charIndex];
+					case OptionsType.CharColourType.NCM:
+					{
+						// For NCM colours RAM is where we set FCM mode for the character as well as palette bank.
 
-					AddScreenBytes(screenRow, charIndex, charData);
-					AddColourBytes(colourRow, charIndex, charData);
+						//            +-------------- vertically flip character
+						//            |+------------- horizontally flip character
+						//            ||+------------ alpha blend mode
+						//            |||+----------- gotox
+						//            ||||+---------- use 4-bits per pixel and 16x8 chars
+						//            |||||+--------- trim pixels from right char side
+						//            |||||| +------- number of pixels to trim
+						//            |||||| |
+						//            ||||||-+
+						byte byte1 = 0b00001000;
 
-					// After adding data at (0,0) of each layer, switch to normal data type and reset layer name.
-					dataType = LayersData.Column.DataType.Data;
-					layerName = null;
+						//            +-------------- underline
+						//            |+-------------- bold
+						//            ||+------------- reverse
+						//            |||+------------ blink
+						//            |||| +---------- colour bank 0-16
+						//            |||| |
+						//            ||||-+--
+						byte byte2 = 0b00000000;
+						byte2 |= (byte)(data.IndexedImage.Bank & 0x0f);
+
+						// No sure why colour bank needs to be in high nibble. According to documentation this is needed if VIC II multi-colour-mode is enabled, however in my code this is also needed if VIC III extended attributes are enabled (AND VIC II MCM is disabled).
+						byte2 = byte2.SwapNibble();
+
+						var column = row.AddColumn(byte1, byte2);
+
+						// Assign data type and layer name.
+						column.Tag = layerName;
+						column.Type = dataType;
+
+						// For colours data1 represents colour bank (only meaningful for NCM).
+						column.Type = dataType;
+						column.Data1 = data.IndexedImage.Bank;
+
+						break;
+					}
 				}
 			}
-		}
 
-		// Store the data.
-		ExportData.LevelName = MergedLayers.LevelName;
-		ExportData.RootFolder = MergedLayers.RootFolder;
-		ExportData.Screen = screen;
-		ExportData.Colour = colour;
+			void AddScreenDelimiterBytes(LayersData.Row row)
+			{
+				// Byte 0 is lower 8 bits of new X position for upcoming layer. We set it to 0 which means "render over the top of left-most character".
+				byte byte1 = 0;
+
+				// Byte 1:
+				//              +-------------- FCM char Y offset
+				//              |  +----------- reserved
+				//              |  |  +-------- upper 2 bits of X position
+				//             /-\/+\|\
+				byte byte2 = 0b00000000;
+
+				var column = row.AddColumn(byte1, byte2);
+				column.Type = LayersData.Column.DataType.Attribute;
+			}
+
+			void AddColourDelimiterBytes(LayersData.Row row)
+			{
+				// Byte 0:
+				//             +-------------- 1 = don't draw transparent pixels
+				//             |+------------- 1 = render following chars as background (sprites appear above)
+				//             ||+------------ reserved
+				//             |||+----------- GOTOX
+				//             ||||+---------- 1 = use pixel row mask from byte2 
+				//             |||||+--------- 1 = render following chars as foreground (sprites appear behind)
+				//             |||||| +------- reserved
+				//             |||||| |
+				//             ||||||/\
+				byte byte1 = 0b10010000;
+
+				// Byte 1 = pixel row mask.
+				byte byte2 = 0x00;
+
+				var column = row.AddColumn(byte1, byte2);
+				column.Type = LayersData.Column.DataType.Attribute;
+			}
+
+			for (var i = 0; i < MergedLayers.Layers.Count; i++)
+			{
+				var layer = MergedLayers.Layers[i];
+
+				// Setup layer name and data type - the first column we'll add is marked as "first data" for later handling.
+				layerName = layer.Name;
+				dataType = LayersData.Column.DataType.FirstData;
+
+				// First layer name is assigned to our one-and-only result layer, for both, screen and colour data.
+				if (i == 0)
+				{
+					screen.Name = layerName;
+					colour.Name = layerName;
+				}
+
+				// Adjust width and height of exported layers.
+				if (layer.IndexedImage.Width > ExportData.LayerWidth) ExportData.LayerWidth = layer.IndexedImage.Width;
+				if (layer.IndexedImage.Height > ExportData.LayerHeight) ExportData.LayerHeight = layer.IndexedImage.Height;
+
+				for (var y = 0; y < layer.IndexedImage.Height; y++)
+				{
+					// Create new rows if needed. This should only happen during the first height iteration.
+					if (y >= screen.Rows.Count) screen.Rows.Add(new());
+					if (y >= colour.Rows.Count) colour.Rows.Add(new());
+
+					// These two lines are where appending data to rows "happens" - for every subsequent layer we will reiterate the same y coordinates so we'll take existing row classes from the lists.
+					var screenRow = screen.Rows[y];
+					var colourRow = colour.Rows[y];
+
+					// We must insert GOTOX delimiters between layers.
+					if (i > 0)
+					{
+						AddScreenDelimiterBytes(screenRow);
+						AddColourDelimiterBytes(colourRow);
+					}
+
+					// Handle all chars of the current row. This will append data to existing rows in RRB mode.
+					for (var x = 0; x < layer.IndexedImage.Width; x++)
+					{
+						var charIndex = layer.IndexedImage[x, y];
+						var charData = CharsContainer.Images[charIndex];
+
+						AddScreenBytes(screenRow, charIndex, charData);
+						AddColourBytes(colourRow, charIndex, charData);
+
+						// After adding data at (0,0) of each layer, switch to normal data type and reset layer name.
+						dataType = LayersData.Column.DataType.Data;
+						layerName = null;
+					}
+				}
+			}
+
+			// Store the data.
+			ExportData.LevelName = MergedLayers.LevelName;
+			ExportData.RootFolder = MergedLayers.RootFolder;
+			ExportData.Screen = screen;
+			ExportData.Colour = colour;
+
+			Logger.Debug.Message($"{MergedLayers.Layers.Count} source layers");
+			Logger.Debug.Message($"{ExportData.Screen.Width * Options.CharData.PixelDataSize}x{ExportData.Screen.Height} screen & colour data size");
+		});
 	}
 
 	#endregion
@@ -579,62 +606,60 @@ public class CharsRunner : BaseRunner
 
 			Logger.Verbose.Separator();
 			Logger.Verbose.Message("Format (hex values in little endian):");
-			if (Logger.Verbose.IsEnabled)
+
+			// Character info.
+			var formatter = Logger.Verbose.IsEnabled ? TableFormatter.CreateFileFormatter() : null;
+
+			writer.Write((byte)charSize);
+			formatter?.AddFileFormat(size: 1, value: charSize, description: "Character size in bytes");
+
+			writer.Write((byte)0xff);
+			formatter?.AddFileFormat(size: 1, value: 0xff, description: "Unused");
+
+			// Layer info.
+			formatter?.AddFileSeparator();
+				
+			writer.Write((ushort)layerWidth);
+			formatter?.AddFileFormat(size: 2, value: layerWidth, description: "Layer width in characters");
+
+			writer.Write((ushort)layerHeight);
+			formatter?.AddFileFormat(size: 2, value: layerHeight, description: "Layer height in characters");
+				
+			writer.Write((ushort)layerRowSize);
+			formatter?.AddFileFormat(size: 2, value: layerRowSize, description: "Layer row size in bytes (logical row size)");
+				
+			writer.Write((uint)layerSizeChars);
+			formatter?.AddFileFormat(size: 4, value: layerSizeChars, description: "Layer size in characters (width * height)");
+				
+			writer.Write((uint)layerSizeBytes);
+			formatter?.AddFileFormat(size: 4, value: layerSizeBytes, description: "Layer size in bytes (width * height * char size)");
+
+			// Screen info.
+			for (var i = 0; i < screenColumns.Length; i++)
 			{
-				// Character info.
-				var formatter = TableFormatter.CreateFileFormatter();
+				var columns = screenColumns[i];
+				var width = screenCharColumns[i];
+				var height = Options.CharData.CharsPerScreenHeight;	// height is always the same
 
-				writer.Write((byte)charSize);
-				formatter.AddFileFormat(size: 1, value: charSize, description: "Character size in bytes");
+				formatter?.AddFileSeparator();
 
-				writer.Write((byte)0xff);
-				formatter.AddFileFormat(size: 1, value: 0xff, description: "Unused");
+				writer.Write((byte)width);
+				formatter?.AddFileFormat(size: 1, value: width, description: $"Characters per {columns} column screen width");
 
-				// Layer info.
-				formatter.AddFileSeparator();
-				
-				writer.Write((ushort)layerWidth);
-				formatter.AddFileFormat(size: 2, value: layerWidth, description: "Layer width in characters");
+				writer.Write((byte)height);
+				formatter?.AddFileFormat(size: 1, value: height, description: "Characters per screen height");
 
-				writer.Write((ushort)layerHeight);
-				formatter.AddFileFormat(size: 2, value: layerHeight, description: "Layer height in characters");
-				
-				writer.Write((ushort)layerRowSize);
-				formatter.AddFileFormat(size: 2, value: layerRowSize, description: "Layer row size in bytes (logical row size)");
-				
-				writer.Write((uint)layerSizeChars);
-				formatter.AddFileFormat(size: 4, value: layerSizeChars, description: "Layer size in characters (width * height)");
-				
-				writer.Write((uint)layerSizeBytes);
-				formatter.AddFileFormat(size: 4, value: layerSizeBytes, description: "Layer size in bytes (width * height * char size)");
+				writer.Write((ushort)(width * charSize));
+				formatter?.AddFileFormat(size: 2, value: width * charSize, description: "Screen row size in bytes");
 
-				// Screen info.
-				for (var i = 0; i < screenColumns.Length; i++)
-				{
-					var columns = screenColumns[i];
-					var width = screenCharColumns[i];
-					var height = Options.CharData.CharsPerScreenHeight;	// height is always the same
+				writer.Write((ushort)(width * height));
+				formatter?.AddFileFormat(size: 2, value: width * height, description: "Screen size in characters");
 
-					formatter.AddFileSeparator();
-
-					writer.Write((byte)width);
-					formatter.AddFileFormat(size: 1, value: width, description: $"Characters per {columns} column screen width");
-
-					writer.Write((byte)height);
-					formatter.AddFileFormat(size: 1, value: height, description: "Characters per screen height");
-
-					writer.Write((ushort)(width * charSize));
-					formatter.AddFileFormat(size: 2, value: width * charSize, description: "Screen row size in bytes");
-
-					writer.Write((ushort)(width * height));
-					formatter.AddFileFormat(size: 2, value: width * height, description: "Screen size in characters");
-
-					writer.Write((ushort)(width * height * charSize));
-					formatter.AddFileFormat(size: 2, value: width * height * charSize, description: "Screen size in bytes");
-				}
-
-				formatter.Log(Logger.Verbose.Option);
+				writer.Write((ushort)(width * height * charSize));
+				formatter?.AddFileFormat(size: 2, value: width * height * charSize, description: "Screen size in bytes");
 			}
+
+			formatter?.Log(Logger.Verbose.Option);
 		});
 	}
 
@@ -684,8 +709,6 @@ public class CharsRunner : BaseRunner
 	/// </summary>
 	private void LogCmdLineOptions()
 	{
-		Logger.Info.Message("Parsing LDtk files");
-
 		Logger.Debug.Separator();
 
 		if (Options.BaseCharsImage != null)
