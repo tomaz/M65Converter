@@ -42,15 +42,36 @@ public class CharsRunner : BaseRunner
 
 	protected override void OnRun()
 	{
+		void Parse(bool allowCompositeImage)
+		{
+			ClearData();
+			ParseBaseChars();
+			ParseInputs(allowCompositeImage);
+
+			// The order of these methods is important - we first need to tackle palette since this is where we adjust colours and banks which are then needed to actually generate the output data.
+			PrepareExportPalette();
+			PrepareExportData();
+			ValidateParsedData();
+		}
+
 		LogCmdLineOptions();
 
-		ParseBaseChars();
-		ParseInputs();
+		try
+		{
+			Parse(allowCompositeImage: true);
+		}
+		catch (Invalid4BitPaletteException e)
+		{
+			Logger.Info.Separator();
+			Logger.Info.Message(" ==============================================================================");
+			Logger.Info.Message($"|| WARNING:");
+			Logger.Info.Message($"|| {e.Message}");
+			Logger.Info.Message($"|| Most common reasons are layer transparency or blending mode");
+			Logger.Info.Message($"|| Attemting to manually merge layers (potentially less accurate output)");
+			Logger.Info.Message(" ==============================================================================");
 
-		// The order of these methods is important - we first need to tackle palette since this is where we adjust colours and banks which are then needed to actually generate the output data.
-		PrepareExportPalette();
-		PrepareExportData();
-		ValidateParsedData();
+			Parse(allowCompositeImage: false);
+		}
 
 		// Note: the order of exports is not important from generated data perspective, but the given order results in nicely grouped log data, especially when verbose logging is enabled. This way it's simpler to compare related data as it's printed close together.
 		ExportColoursData();
@@ -64,6 +85,11 @@ public class CharsRunner : BaseRunner
 	#endregion
 
 	#region Parsing
+
+	private void ClearData()
+	{
+		CharsContainer.Clear();
+	}
 
 	/// <summary>
 	/// Parses base characters image to establish base set of chars to use.
@@ -105,13 +131,14 @@ public class CharsRunner : BaseRunner
 	/// 
 	/// The result is all data needed for exporting is compiled into <see cref="MergedLayers"/> property. From here on, this is what should be used.
 	/// </summary>
-	private void ParseInputs()
+	private void ParseInputs(bool isCompositeImageAllowed = true)
 	{
 		void MergeLayers(LevelData data)
 		{
 			var options = new LayerMerger.OptionsType
 			{
-				IsRasterRewriteBufferSupported = Options.IsRasterRewriteBufferSupported
+				IsRasterRewriteBufferSupported = Options.IsRasterRewriteBufferSupported,
+				IsCompositeImageAllowed = isCompositeImageAllowed,
 			};
 
 			MergedLayers = LayerMerger

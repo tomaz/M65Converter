@@ -6,11 +6,6 @@
 public class ImagesContainer
 {
 	/// <summary>
-	/// Global palette. Must be assigned from outside class after merging colours.
-	/// </summary>
-	public IReadOnlyList<Argb32> GlobalPalette { get; set; } = null!;
-
-	/// <summary>
 	/// The list of all items.
 	/// </summary>
 	public IReadOnlyList<ImageData> Images { get => images; }
@@ -27,7 +22,17 @@ public class ImagesContainer
 
 	private List<ImageData> images = new();
 
-	#region Adding images
+	#region Managing data
+
+	/// <summary>
+	/// Clears all parsed data.
+	/// </summary>
+	public void Clear()
+	{
+		images.Clear();
+		TransparentImage = null;
+		TransparentImageIndex = -1;
+	}
 
 	/// <summary>
 	/// Adds the given image to the container if the given options allow it.

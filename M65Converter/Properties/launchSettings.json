@@ -2,7 +2,7 @@
   "profiles": {
     "M65Converter": {
       "commandName": "Project",
-      "commandLineArgs": "-v verbose\r\nchars\r\n--rrb\r\n--info 2\r\n--colour ncm\r\n--chars-address $20000\r\n--out-folder c:\\Users\\tkrag\\Documents\\Projects\\Retro\\C64\\games\\test\\Mega65Test\\build\\assets\\\r\n--out-name \"{level}\\{filename}\"\r\nc:\\Users\\tkrag\\Documents\\Projects\\Retro\\C64\\games\\test\\Mega65Test\\assets\\level1.aseprite"
+      "commandLineArgs": "-v debug\r\nchars\r\n--info 2\r\n--colour fcm\r\n--chars-address $20000\r\n--out-folder c:\\Users\\tkrag\\Documents\\Projects\\Retro\\C64\\games\\test\\Mega65Test\\build\\assets\\\r\n--out-name \"{level}\\{filename}\"\r\nc:\\Users\\tkrag\\Documents\\Projects\\Retro\\C64\\games\\test\\Mega65Test\\assets\\level1.aseprite"
     }
   }
 }

@@ -29,6 +29,11 @@ public class LevelData
 	public string RootFolder { get; set; } = null!;
 
 	/// <summary>
+	/// Optional composite layer. Only available with some types of sources. If available, it should be used instead of manually merging the layers as it's more accurate representation of the source.
+	/// </summary>
+	public LayerData? CompositeLayer { get; set; }
+
+	/// <summary>
 	/// The list of all layers.
 	/// </summary>
 	public List<LayerData> Layers { get; set; } = new();

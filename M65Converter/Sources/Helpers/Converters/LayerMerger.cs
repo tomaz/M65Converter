@@ -39,6 +39,7 @@ public abstract class LayerMerger
 	public class OptionsType
 	{
 		public bool IsRasterRewriteBufferSupported { get; init; }
+		public bool IsCompositeImageAllowed { get; init; }
 	}
 
 	#endregion

@@ -25,12 +25,21 @@ public class AsepriteLevelParser
 			Image = x,
 		});
 
+		// Prepare composite layer, it's more accurate representation if merged layers are needed as it takes care of layer transparency etc.
+		var composite = new LevelData.LayerData
+		{
+			Path = path,
+			Name = frame.LayerNames.First(),
+			Image = frame.CompositeImage
+		};
+
 		return new LevelData
 		{
 			Width = aseprite.AsepriteHeader.Width,
 			Height = aseprite.AsepriteHeader.Height,
 			LevelName = Path.GetFileNameWithoutExtension(path),
 			RootFolder = Path.GetDirectoryName(path)!,
+			CompositeLayer = composite,
 			Layers = layers.ToList()
 		};
 	}

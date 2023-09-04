@@ -20,27 +20,38 @@ public class TimeRunner
 
 		LoggerFunction(Title != null ? Header + Title : Header);
 
-		action();
-
-		watch.Stop();
-
-		if (Footer != null)
+		try
 		{
-			var footer = Footer
-				.Replace("{Time}", $"{watch.ElapsedMilliseconds}ms")
-				.Replace("{Title}", Title != null ? Title : "");
-
-			LoggerFunction(footer);
+			action();
 		}
-		else
+		catch
 		{
-			var timeText = new StringBuilder($"\\\\_{watch.ElapsedMilliseconds}ms");
+			// In case of error, re-throw the exception.
+			throw;
+		}
+		finally
+		{
+			// Successful, or failed, we should log how much time it took.
+			watch.Stop();
 
-			if (Title != null) timeText.Append($"_[{Title.Replace(" ", "_")}]");
-			
-			while (timeText.Length < 79) timeText.Append("_");
-			
-			LoggerFunction(timeText.ToString());
+			if (Footer != null)
+			{
+				var footer = Footer
+					.Replace("{Time}", $"{watch.ElapsedMilliseconds}ms")
+					.Replace("{Title}", Title != null ? Title : "");
+
+				LoggerFunction(footer);
+			}
+			else
+			{
+				var timeText = new StringBuilder($"\\\\_{watch.ElapsedMilliseconds}ms");
+
+				if (Title != null) timeText.Append($"_[{Title.Replace(" ", "_")}]");
+
+				while (timeText.Length < 79) timeText.Append("_");
+
+				LoggerFunction(timeText.ToString());
+			}
 		}
 	}
 }
