@@ -935,7 +935,7 @@ public class CharsRunner : BaseRunner
 
 		private Argument<FileInfo[]> inputFolders = new(
 			name: "input",
-			description: "One or more input folders with LDtk simplified exported files"
+			description: "One or more input files or folders"
 		)
 		{
 			Arity = ArgumentArity.OneOrMore
@@ -983,7 +983,7 @@ public class CharsRunner : BaseRunner
 
 		private Option<int> imageInfoScale = new(
 			name: "--info",
-			description: "Enables info image generation if > 0 (can be quite slow!), otherwise info image is not generated",
+			description: "Info image scale (1 or greater to enable, 0 to disable). NOTE: this can be quite slow!",
 			getDefaultValue: () => 0
 		);
 

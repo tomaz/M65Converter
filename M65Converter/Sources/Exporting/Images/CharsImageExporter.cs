@@ -54,7 +54,12 @@ public class CharsImageExporter : BaseImageExporter
 		MeasureChars(measures);
 		MeasurePalette(measures);
 		MeasureLayers(measures, LayersData.Screen, ScreenLayerPositions);
-		MeasureLayers(measures, LayersData.Colour, ColourLayerPositions, isUsingImages: false);
+		MeasureLayers(
+			measures: measures, 
+			layer: LayersData.Colour, 
+			positions: ColourLayerPositions, 
+			isUsingImages: false, 
+			onlyIfFontIsAvailable: true);	// colours are only composed of text, so there's no point in exporting if fonts are not available
 
 		return measures.MeasuredSize;
 	}
@@ -169,7 +174,7 @@ public class CharsImageExporter : BaseImageExporter
 
 				// Prepare other sizes.
 				var scaledColourBoxSize = measures.Scaled(ColourBoxSize);
-				var minColourWidth = Math.Min(indexTextSize.Width, scaledColourBoxSize.Width);
+				var minColourWidth = Math.Max(indexTextSize.Width, scaledColourBoxSize.Width);
 				var minColourHeight = Math.Max(rgbTextSize.Height, scaledColourBoxSize.Height);
 
 				// Prepare colour item size.
@@ -236,8 +241,12 @@ public class CharsImageExporter : BaseImageExporter
 		Measures measures, 
 		LayersData.Layer layer, 
 		BoxData<LayerPositionsType> positions,
-		bool isUsingImages = true)
+		bool isUsingImages = true,
+		bool onlyIfFontIsAvailable = false)
 	{
+		// If we are only outputting text, there's no point in generating anything if font is not available.
+		if (onlyIfFontIsAvailable && !measures.FontRenderer.IsEnabled) return;
+
 		measures.MeasureBoxedData(
 			offsetX: Measures.Position.ImagePadding,
 			offsetY: Measures.Position.MaxEnd,
@@ -251,21 +260,22 @@ public class CharsImageExporter : BaseImageExporter
 				var topHeaderSize = measures.SmallFontRenderer.Measure("8");	// only height is important
 				var topHeaderMargin = 3;
 
-				var charWidth = Math.Max(scaledCharSize.Width, dataSize.Width);
-				var charHeight =
-					(isUsingImages ? scaledCharSize.Height : 0) +	// character itself
-					dataSize.Height +	// values
-					2;					// some margin
-
 				// For FCM mode we need some more horizontal separation to have readable hex values. Either way we also want some separation between layers.
 				var horizontalMargin = CharInfo.Width == 8 ? 3 : 1;
+				var verticalMargin = measures.FontRenderer.IsEnabled ? 3 : 1;
+
+				var charWidth = Math.Max(scaledCharSize.Width, dataSize.Width);
+				var charHeight =
+					(isUsingImages ? scaledCharSize.Height : 0) +   // character itself
+					dataSize.Height;	// values
+
 				var layerHorizontaMargin = 5;
 
 				builder.UseTitle();
 				builder.SetupLeftHeader(leftHeaderSize.Width);
 				builder.SetupTopHeader(topHeaderSize.Height);
 				builder.SetupElementWidth(charWidth, margin: horizontalMargin);
-				builder.SetupElementHeight(charHeight, margin: 1);
+				builder.SetupElementHeight(charHeight, margin: verticalMargin);
 				
 				builder.SetupBox(
 					count: layer.Count,
