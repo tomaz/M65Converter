@@ -1,4 +1,5 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Utils;
 
@@ -13,7 +14,7 @@ public class PaletteMerger4Bit : PaletteMerger
 
 	#region Overrides
 
-	protected override void OnMerge(IReadOnlyList<ImageData> images, List<Argb32> palette)
+	protected override void OnMerge(IReadOnlyList<ImageData> images, List<ColourData> palette)
 	{
 		// Merging 4-bit palette is quite a complex operation composed of several steps. In a nutshell: we need to inteligently parse the colours and try to fit as many images as possible into each 16-colour bank. The first colour in each bank is considered transparent if transparency is enabled. At this point we already have all distinct colours of each image in the `ImageData` provided to us so we can work on that. However we must ensure each image only has up to 16 colours.
 		ValidateColoursPerImage(images);
@@ -204,13 +205,17 @@ public class PaletteMerger4Bit : PaletteMerger
 					var colour = new Argb32(r: 255, g: 0, b: 255, a: 255);  // magenta to let it stick out
 					Logger.Verbose.SubSubOption($"{colourIndex}: {colour}");
 
-					bank.Colours.Add(colour);
+					bank.Colours.Add(new()
+					{
+						Colour = colour,
+						IsUsed = false
+					});
 				}
 			}
 		}
 	}
 
-	private void PrepareMergedPalette(List<ColourBank> banks, List<Argb32> palette)
+	private void PrepareMergedPalette(List<ColourBank> banks, List<ColourData> palette)
 	{
 		Logger.Verbose.Separator();
 		Logger.Verbose.Message("Preparing merged global palette");
@@ -238,7 +243,7 @@ public class PaletteMerger4Bit : PaletteMerger
 		/// <summary>
 		/// All the colours of this bank.
 		/// </summary>
-		public List<Argb32> Colours { get; } = new();
+		public List<ColourData> Colours { get; } = new();
 
 		/// <summary>
 		/// All the images that use colours from this bank.
@@ -298,7 +303,10 @@ public class PaletteMerger4Bit : PaletteMerger
 			// If the bank is empty, we need to insert transparent colour first.
 			if (Colours.Count == 0)
 			{
-				Colours.Add(new Argb32(r: 0, g: 0, b: 0, a: 0));
+				Colours.Add(new()
+				{
+					Colour = new Argb32(r: 0, g: 0, b: 0, a: 0)
+				});
 			}
 
 			// Append all unique colours of the image.

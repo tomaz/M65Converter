@@ -271,6 +271,7 @@ public abstract class BaseImageExporter
 			private Point bottomRight = new();
 			private Size elementSize = new();
 			private Point elementMargin = new();
+			private Point? nextElementOffset = null;
 
 			private int elementsCount = 0;
 			private int elementsBoxWidth = 16;
@@ -441,6 +442,16 @@ public abstract class BaseImageExporter
 			#region Measuring
 
 			/// <summary>
+			/// Offsets next measured element position of the current box measuring.
+			/// 
+			/// This should be called inside <see cref="Measure"/> callback. It will offset the position before calculating next element so all subsequent elements of the same row will be offset by the given amount. When next row will be reached, the offset will be reset to default. Therefore it's recommended to only offset horizontally.
+			/// </summary>
+			public void OffsetBox(int x, int y = 0)
+			{
+				nextElementOffset = new Point(x, y);
+			}
+
+			/// <summary>
 			/// Measures all elements of the box.
 			/// 
 			/// For each element it calls the given action providing element index and its top-left coordinate.
@@ -478,6 +489,13 @@ public abstract class BaseImageExporter
 
 					// Ask caller to measure it.
 					handler(i, pos);
+
+					// Apply the offset. Then reset the offset - it will affect offset of all subsequent elements, so we don't want to apply it continuously.
+					if (nextElementOffset != null) {
+						pos.X += nextElementOffset.Value.X;
+						pos.Y += nextElementOffset.Value.Y;
+						nextElementOffset = null;
+					}
 				}
 
 				// If title is used, we need to adjust top left.

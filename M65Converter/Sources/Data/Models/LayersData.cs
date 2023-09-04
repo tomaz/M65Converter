@@ -38,7 +38,7 @@ public class LayersData
 	/// <summary>
 	/// All colours.
 	/// </summary>
-	public List<Argb32> Palette { get; set; } = new();
+	public List<ColourData> Palette { get; set; } = new();
 
 	#region Declarations
 

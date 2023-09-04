@@ -1,4 +1,5 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Utils;
 
@@ -8,7 +9,7 @@ public class PaletteMerger8Bit : PaletteMerger
 {
 	#region Overrides
 
-	protected override void OnMerge(IReadOnlyList<ImageData> images, List<Argb32> palette)
+	protected override void OnMerge(IReadOnlyList<ImageData> images, List<ColourData> palette)
 	{
 		var index = -1;
 		foreach (var image in images)
@@ -35,7 +36,7 @@ public class PaletteMerger8Bit : PaletteMerger
 
 	#region Helpers
 
-	private Dictionary<int, int> MergeColours(List<Argb32> palette, ImageData item, int itemIndex)
+	private Dictionary<int, int> MergeColours(List<ColourData> palette, ImageData item, int itemIndex)
 	{
 		var isItemChangeLogged = false; // used to only log item if it adds any new colours to merged palette
 

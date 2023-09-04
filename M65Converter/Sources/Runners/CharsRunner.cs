@@ -248,12 +248,14 @@ public class CharsRunner : BaseRunner
 
 			void AddColourBytes(LayersData.Row row, int index, ImageData data)
 			{
+				LayersData.Column column = null!;
+
 				switch (Options.CharColour)
 				{
 					case OptionsType.CharColourType.FCM:
 					{
 						// For FCM colours are not important (until we implement char flipping for example), we always use 0.
-						row.AddColumn(0x00, 0x00);
+						column = row.AddColumn(0x00, 0x00);
 						break;
 					}
 
@@ -285,11 +287,7 @@ public class CharsRunner : BaseRunner
 						// No sure why colour bank needs to be in high nibble. According to documentation this is needed if VIC II multi-colour-mode is enabled, however in my code this is also needed if VIC III extended attributes are enabled (AND VIC II MCM is disabled).
 						byte2 = byte2.SwapNibble();
 
-						var column = row.AddColumn(byte1, byte2);
-
-						// Assign data type and layer name.
-						column.Tag = layerName;
-						column.Type = dataType;
+						column = row.AddColumn(byte1, byte2);
 
 						// For colours data1 represents colour bank (only meaningful for NCM).
 						column.Type = dataType;
@@ -298,6 +296,10 @@ public class CharsRunner : BaseRunner
 						break;
 					}
 				}
+
+				// Assign data type and layer name.
+				column.Tag = layerName;
+				column.Type = dataType;
 			}
 
 			void AddScreenDelimiterBytes(LayersData.Row row)
@@ -579,7 +581,7 @@ public class CharsRunner : BaseRunner
 		CreateExporter("palette", "chars.pal").Export(writer =>
 		{
 			new PaletteExporter().Export(
-				palette: ExportData.Palette,
+				palette: ExportData.Palette.Select(x => x.Colour).ToList(),
 				writer: writer
 			);
 		});

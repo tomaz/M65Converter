@@ -257,8 +257,9 @@ public class CharsImageExporter : BaseImageExporter
 					dataSize.Height +	// values
 					2;					// some margin
 
-				// For FCM mode we need some more horizontal separation to have readable hex values.
+				// For FCM mode we need some more horizontal separation to have readable hex values. Either way we also want some separation between layers.
 				var horizontalMargin = CharInfo.Width == 8 ? 3 : 1;
+				var layerHorizontaMargin = 5;
 
 				builder.UseTitle();
 				builder.SetupLeftHeader(leftHeaderSize.Width);
@@ -276,10 +277,18 @@ public class CharsImageExporter : BaseImageExporter
 					var coordinate = builder.CurrentIndex;
 					var data = layer[coordinate.X, coordinate.Y];
 
+					// Add some offset after attributes. But also before - for this we have to update the position we got. Note how we need to adjust margin after attribute twice - we need to take into account the offset we're applying to current position.
+					var adjustedPosition = position;
+					if (data.Type == LayersData.Column.DataType.Attribute)
+					{
+						adjustedPosition.X += layerHorizontaMargin;
+						builder.OffsetBox(layerHorizontaMargin * 2, 0);
+					}
+
 					// Rectangle for char image.
 					var charImageRect = new Rectangle(
-						x: position.X,
-						y: position.Y,
+						x: adjustedPosition.X,
+						y: adjustedPosition.Y,
 						width: scaledCharSize.Width,
 						height: scaledCharSize.Height
 					);
@@ -294,7 +303,7 @@ public class CharsImageExporter : BaseImageExporter
 
 					// Position for layer name.
 					var layerNamePos = new Point(
-						x: position.X,
+						x: adjustedPosition.X,
 						y: builder.TitleLeftTop?.Y ?? 0		// we should have title-left-top, but let's be proactive...
 					);
 
@@ -306,7 +315,7 @@ public class CharsImageExporter : BaseImageExporter
 
 					// Position for top header.
 					var topHeaderPos = new Point(
-						x: position.X,
+						x: adjustedPosition.X,
 						y: layerNamePos.Y + builder.TitleHeight + topHeaderMargin
 					);
 
@@ -403,12 +412,28 @@ public class CharsImageExporter : BaseImageExporter
 			);
 		}
 
+		var markerSize = info.SmallFontRenderer.Measure("M");
+
+		void DrawMarker(string marker, Rectangle colourBox, Argb32 colour)
+		{
+			var textColour = colour.IsDark() ? Color.White : Color.Black;
+
+			info.SmallFontRenderer.Draw(
+				context: info.Context,
+				text: marker,
+				color: textColour,
+				x: colourBox.X + (colourBox.Width - markerSize.Width) / 2,
+				y: colourBox.Y + (colourBox.Height - markerSize.Height) / 2
+			);
+		}
+
 		for (var i = 0; i < LayersData.Palette.Count; i++)
 		{
-			var original = LayersData.Palette[i];
+			var colour = LayersData.Palette[i];
 			var positions = ColourPositions.Boxes[i];
 
-			var colour = original.A == 0 ? new Argb32(original.R, original.G, original.B, 255) : original;
+			var argb = colour.Colour;
+			var appliedColour = argb.A == 0 ? new Argb32(argb.R, argb.G, argb.B, 255) : argb;
 
 			// Colour index.
 			info.FontRenderer.Draw(
@@ -421,23 +446,33 @@ public class CharsImageExporter : BaseImageExporter
 			// Colour RGB.
 			info.FontRenderer.Draw(
 				context: info.Context,
-				text: $"{colour.R:X2}{colour.G:X2}{colour.B:X2}",
+				text: $"{appliedColour.R:X2}{appliedColour.G:X2}{appliedColour.B:X2}",
 				color: info.TextFadedColour,
 				point: positions.RGBTextPos
 			);
 
 			// Colour itself.
 			info.Context.Fill(
-				color: colour,
+				color: appliedColour,
 				shape: positions.ColourBox
 			);
 
-			// Frame aroung colour.
+			// Frame around colour.
 			info.Context.Draw(
 				color: info.FrameColour,
 				thickness: 1,
 				shape: positions.ColourBox
 			);
+
+			// Colour marker (if needed).
+			if (colour.IsTransparent)
+			{
+				DrawMarker("T", positions.ColourBox, appliedColour);
+			}
+			else if (!colour.IsUsed)
+			{
+				DrawMarker("X", positions.ColourBox, appliedColour);
+			}
 		}
 	}
 

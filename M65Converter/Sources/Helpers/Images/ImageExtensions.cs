@@ -1,4 +1,5 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Helpers.Utils;
 
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -155,6 +156,22 @@ public static class ImageExtensions
 	}
 
 	/// <summary>
+	/// Determines if the given ARGB is part of this colours list.
+	/// </summary>
+	public static bool Contains(this List<ColourData> colours, Argb32 find)
+	{
+		return colours.IndexOf(find) > 0;
+	}
+
+	/// <summary>
+	/// Finds an index of the given ARGB colour in this list.
+	/// </summary>
+	public static int IndexOf(this List<ColourData> colours, Argb32 find)
+	{
+		return colours.FindIndex(c => c.Colour == find);
+	}
+
+	/// <summary>
 	/// Merges the given list of source colours into this palette (both are represented as list of colours).
 	/// 
 	/// This function takes care of unifying transparent colour (when alpha is 0, it doesn't matter what RGB components are, it will always be treated as fully transparent colour). When completed, this palette will contain all previous colours plus all unique colours from the given source list.
@@ -168,7 +185,7 @@ public static class ImageExtensions
 	/// - Argb32: the colour that was handled
 	/// </summary>
 	public static Dictionary<int, int> MergeColours(
-		this List<Argb32> palette, 
+		this List<ColourData> palette, 
 		IReadOnlyList<Argb32> from,
 		Action<bool, int, int, Argb32>? callback = null)
 	{
@@ -190,7 +207,7 @@ public static class ImageExtensions
 			if (index < 0)
 			{
 				index = palette.Count;
-				palette.Add(colour);
+				palette.Add(new() { Colour = colour });
 				callback?.Invoke(true, i, index, originalColour);
 			}
 			else

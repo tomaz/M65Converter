@@ -1,4 +1,5 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Helpers.Converters.Palette;
 using M65Converter.Sources.Helpers.Utils;
 
@@ -44,7 +45,7 @@ public abstract class PaletteMerger
 	/// 
 	/// Subclass should merge all image colours into the given palette.
 	/// </summary>
-	protected abstract void OnMerge(IReadOnlyList<ImageData> images, List<Argb32> palette);
+	protected abstract void OnMerge(IReadOnlyList<ImageData> images, List<ColourData> palette);
 
 	#endregion
 
@@ -53,11 +54,11 @@ public abstract class PaletteMerger
 	/// <summary>
 	/// Merges all colours into global palette.
 	/// </summary>
-	public List<Argb32> Merge()
+	public List<ColourData> Merge()
 	{
 		Logger.Debug.Message("Merging palette");
 
-		var result = new List<Argb32>();
+		var result = new List<ColourData>();
 
 		OnMerge(Options.Images, result);
 
