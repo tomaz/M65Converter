@@ -1,6 +1,7 @@
 ﻿using M65Converter.Runners;
 using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Models;
+using M65Converter.Sources.Data.Providers;
 using M65Converter.Sources.Exporting.Images;
 using M65Converter.Sources.Exporting.Utils;
 using M65Converter.Sources.Helpers.Converters;
@@ -18,10 +19,14 @@ namespace M65Converter.Sources.Runners;
 /// </summary>
 public class CharsRunner : BaseRunner
 {
-	private OptionsType Options { get; set; } = null!;
+	/// <summary>
+	/// The options to use for this run.
+	/// </summary>
+	public OptionsType Options { get; init; } = null!;
+
 	private ImagesContainer CharsContainer { get; } = new();
 	private LevelData MergedLayers { get; set; } = null!;
-	private LayersData ExportData { get; } = new();
+	private LayersData ExportData { get; set; } = new();
 
 	#region Overrides
 
@@ -42,44 +47,11 @@ public class CharsRunner : BaseRunner
 
 	protected override void OnRun()
 	{
-		void Parse(bool allowCompositeImage)
-		{
-			ClearData();
-			ParseBaseChars();
-			ParseInputs(allowCompositeImage);
-
-			// The order of these methods is important - we first need to tackle palette since this is where we adjust colours and banks which are then needed to actually generate the output data.
-			PrepareExportPalette();
-			PrepareExportData();
-			ValidateParsedData();
-		}
-
 		LogCmdLineOptions();
+		ClearData();
 
-		try
-		{
-			Parse(allowCompositeImage: true);
-		}
-		catch (Invalid4BitPaletteException e)
-		{
-			Logger.Info.Separator();
-			Logger.Info.Message(" ==============================================================================");
-			Logger.Info.Message($"|| WARNING:");
-			Logger.Info.Message($"|| {e.Message}");
-			Logger.Info.Message($"|| Most common reasons are layer transparency or blending mode");
-			Logger.Info.Message($"|| Attemting to manually merge layers (potentially less accurate output)");
-			Logger.Info.Message(" ==============================================================================");
-
-			Parse(allowCompositeImage: false);
-		}
-
-		// Note: the order of exports is not important from generated data perspective, but the given order results in nicely grouped log data, especially when verbose logging is enabled. This way it's simpler to compare related data as it's printed close together.
-		ExportColoursData();
-		ExportLayerData();
-		ExportCharsData();
-		ExportPaletteData();
-		ExportLayerInfo();
-		ExportInfoImage();
+		ParseBaseChars();
+		ParseInputs();
 	}
 
 	#endregion
@@ -106,10 +78,10 @@ public class CharsRunner : BaseRunner
 		{
 			Logger.Debug.Separator();
 			Logger.Info.Message($"---> {Options.BaseCharsImage}");
-			Logger.Debug.Message($"Adding characters from base image {Options.BaseCharsImage.Name}");
+			Logger.Debug.Message($"Adding characters from base image {Options.BaseCharsImage.GetFilename()}");
 
 			// Load the image.
-			var image = Image.Load<Argb32>(Options.BaseCharsImage.FullName);
+			var image = Image.Load<Argb32>(Options.BaseCharsImage.GetStream(FileMode.Open));
 
 			// For base characters we keep all transparents to achieve consistent results. With these characters it's responsibility of the creator to trim source image. Same for duplicates, we want to leave all characters to preserve positions, however when matching them on layers, it will always take the first match.
 			var result = new ImageSplitter
@@ -121,6 +93,9 @@ public class CharsRunner : BaseRunner
 			}
 			.Split(image, CharsContainer);
 
+			// After we parse base characters we set the restore point so we can later revert charset to base.
+			CharsContainer.SetRestorePoint();
+
 			// Note: we ignore indexed image for base characters. We only need actual layers from LDtk.
 			Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} characters");
 		});
@@ -131,22 +106,9 @@ public class CharsRunner : BaseRunner
 	/// 
 	/// The result is all data needed for exporting is compiled into <see cref="MergedLayers"/> property. From here on, this is what should be used.
 	/// </summary>
-	private void ParseInputs(bool isCompositeImageAllowed = true)
+	private void ParseInputs()
 	{
-		void MergeLayers(LevelData data)
-		{
-			var options = new LayerMerger.OptionsType
-			{
-				IsRasterRewriteBufferSupported = Options.IsRasterRewriteBufferSupported,
-				IsCompositeImageAllowed = isCompositeImageAllowed,
-			};
-
-			MergedLayers = LayerMerger
-				.Create(options)
-				.Merge(data);
-		}
-
-		void AppendExtraCharsFromLayers()
+		void AppendTransparentChar()
 		{
 			// Add fully transparent character if we don't yet have one. We need to have at least one fully transparent character so that we can properly setup indexed layers that contain transparent characters. If we already have transparent character (either from base characters set, or from previous layers), this will not create additional one.
 			var transparentCharAddResult = CharsContainer.AddTransparentImage(
@@ -154,42 +116,55 @@ public class CharsRunner : BaseRunner
 				height: Options.CharData.Height
 			);
 
-			foreach (var layer in MergedLayers.Layers)
+			// Log transparent character addition.
+			if (transparentCharAddResult.WasAdded)
 			{
-				Logger.Verbose.Separator();
-				Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Name)}");
-
-				// Log transparent character addition.
-				if (transparentCharAddResult.WasAdded)
-				{
-					Logger.Verbose.Message("Adding transparent character");
-				}
-
-				// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
-				var result = new ImageSplitter
-				{
-					ItemWidth = Options.CharData.Width,
-					ItemHeight = Options.CharData.Height,
-					TransparencyOptions = TransparencyOptionsType.OpaqueOnly,
-					DuplicatesOptions = DuplicatesOptionsType.UniqueOnly
-				}
-				.Split(layer.Image, CharsContainer);
-
-				// Assign indexed image to layer.
-				layer.IndexedImage = result.IndexedImage;
-
-				Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} unique characters");
+				Logger.Verbose.Message("Adding transparent character");
 			}
 		}
 
-		// Parse all input folders.
-		new InputFilesHandler
+		void SetupLayerData(IStreamProvider input, bool isCompositeImageAllowed)
 		{
-			Title = "Parsing",
-			Sources = Options.Inputs
-		}
-		.Run(input =>
-		{
+			void MergeLayers(LevelData data)
+			{
+				var options = new LayerMerger.OptionsType
+				{
+					IsRasterRewriteBufferSupported = Options.IsRasterRewriteBufferSupported,
+					IsCompositeImageAllowed = isCompositeImageAllowed,
+				};
+
+				MergedLayers = LayerMerger
+					.Create(options)
+					.Merge(data);
+			}
+
+			void AppendExtraCharsFromLayers()
+			{
+				foreach (var layer in MergedLayers.Layers)
+				{
+					Logger.Verbose.Separator();
+					Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Name)}");
+
+					// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
+					var result = new ImageSplitter
+					{
+						ItemWidth = Options.CharData.Width,
+						ItemHeight = Options.CharData.Height,
+						TransparencyOptions = TransparencyOptionsType.OpaqueOnly,
+						DuplicatesOptions = DuplicatesOptionsType.UniqueOnly
+					}
+					.Split(layer.Image, CharsContainer);
+
+					// Assign indexed image to layer.
+					layer.IndexedImage = result.IndexedImage;
+
+					Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} unique characters");
+				}
+			}
+
+			// Characters (and consequently underlying palette) are updated with each input, but the rest of the export data is reset every time.
+			ClearParsedData();
+
 			// Parse input data.
 			var inputData = LevelData.Parse(input);
 
@@ -201,6 +176,56 @@ public class CharsRunner : BaseRunner
 
 			Logger.Verbose.Separator();
 			Logger.Debug.Message($"{CharsContainer.Images.Count} characters found");
+		}
+
+		void ConvertLayersToExportData(bool isCompositeImageAllowed)
+		{
+			// The order of these methods is important - we first need to tackle palette since this is where we adjust colours and banks which are then needed to actually generate the output data.
+			PrepareExportPalette(isCompositeImage: isCompositeImageAllowed);
+			PrepareExportData();
+			ValidateParsedData();
+		}
+
+		// We only need 1 fully transparent character. If we don't yet have it from base chars, this is where we'll add it.
+		AppendTransparentChar();
+
+		// Parse all input folders.
+		new InputFilesHandler
+		{
+			Title = "Parsing",
+			Sources = Options.InputsOutputs.Select(x => x.Input).ToArray()
+		}
+		.Run((index, input) =>
+		{
+			try
+			{
+				// First attempt to use parsed composite image. This respects layer transparency and blending modes, so yields more accurate results. However it can easily overflow the palette. If this fails, we'll fall-down to manual layer merging in catch below.
+				// Note: only certain types of inputs support composite images. If that's not supported for current input, layer merging will be used here as well.
+				SetupLayerData(input, isCompositeImageAllowed: true);
+				ConvertLayersToExportData(isCompositeImageAllowed: true);
+			}
+			catch (InvalidCompositeImageDataException e)
+			{
+				// Composite image failed, let's fall down to manual layer merging. This works perfectly fine when layers don't use transparency or blending modes, but can
+				Logger.Info.Separator();
+				Logger.Info.Message(" ==============================================================================");
+				Logger.Info.Message($"|| WARNING:");
+				Logger.Info.Message($"|| {e.Message}");
+				Logger.Info.Message($"|| Most common reasons are layer transparency or blending mode");
+				Logger.Info.Message($"|| Attemting to manually merge layers (potentially less accurate output)");
+				Logger.Info.Message(" ==============================================================================");
+
+				SetupLayerData(input, isCompositeImageAllowed: false);
+				ConvertLayersToExportData(isCompositeImageAllowed: false);
+			}
+
+			// Note: the order of exports is not important from generated data perspective, but the given order results in nicely grouped log data, especially when verbose logging is enabled. This way it's simpler to compare related data as it's printed close together.
+			ExportColoursData(index);
+			ExportScreenData(index);
+			ExportCharsData(index);
+			ExportPaletteData(index);
+			ExportLayerInfo(index);
+			ExportInfoImage(index);
 		});
 	}
 
@@ -211,7 +236,7 @@ public class CharsRunner : BaseRunner
 	/// <summary>
 	/// Merges all different colours from all layers into a single "global" palette to make it ready for exporting.
 	/// </summary>
-	private void PrepareExportPalette()
+	private void PrepareExportPalette(bool isCompositeImage)
 	{
 		Logger.Debug.Separator();
 
@@ -224,6 +249,7 @@ public class CharsRunner : BaseRunner
 			var options = new PaletteMerger.OptionsType
 			{
 				Is4Bit = Options.CharColour == OptionsType.CharColourType.NCM,
+				IsCompositeImage = isCompositeImage,
 				IsUsingTransparency = true,
 				Images = CharsContainer.Images,
 			};
@@ -433,9 +459,9 @@ public class CharsRunner : BaseRunner
 
 	#region Exporting
 
-	private void ExportColoursData()
+	private void ExportColoursData(int index)
 	{
-		CreateExporter("colour ram", "colour.bin").Export(writer =>
+		CreateExporter("colour ram", Options.InputsOutputs[index].OutputColourStream).Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
 			Logger.Verbose.Option($"Each colour is {Options.CharData.PixelDataSize} bytes");
@@ -474,9 +500,9 @@ public class CharsRunner : BaseRunner
 		});
 	}
 
-	private void ExportLayerData()
+	private void ExportScreenData(int index)
 	{
-		CreateExporter("layers", "layer.bin").Export(writer =>
+		CreateExporter("layers", Options.InputsOutputs[index].OutputScreenStream).Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
 			Logger.Verbose.Option($"Expected to be copied to memory address ${Options.CharsBaseAddress:X}");
@@ -518,9 +544,9 @@ public class CharsRunner : BaseRunner
 		});
 	}
 
-	private void ExportCharsData()
+	private void ExportCharsData(int index)
 	{
-		CreateExporter("chars", "chars.bin").Export(writer =>
+		CreateExporter("chars", Options.InputsOutputs[index].OutputCharsStream).Export(writer =>
 		{
 			Logger.Verbose.Message("Format:");
 			Logger.Verbose.Option($"{CharsContainer.Images.Count} characters");
@@ -603,9 +629,9 @@ public class CharsRunner : BaseRunner
 		});
 	}
 
-	private void ExportPaletteData()
+	private void ExportPaletteData(int index)
 	{
-		CreateExporter("palette", "chars.pal").Export(writer =>
+		CreateExporter("palette", Options.InputsOutputs[index].OutputPaletteStream).Export(writer =>
 		{
 			new PaletteExporter().Export(
 				palette: ExportData.Palette.Select(x => x.Colour).ToList(),
@@ -614,9 +640,9 @@ public class CharsRunner : BaseRunner
 		});
 	}
 
-	private void ExportLayerInfo()
+	private void ExportLayerInfo(int index)
 	{
-		CreateExporter("layer info", "layer.inf").Export(writer =>
+		CreateExporter("layer info", Options.InputsOutputs[index].OutputInfoDataStream).Export(writer =>
 		{
 			var charSize = Options.CharData.PixelDataSize;
 
@@ -692,11 +718,11 @@ public class CharsRunner : BaseRunner
 		});
 	}
 
-	private void ExportInfoImage()
+	private void ExportInfoImage(int index)
 	{
 		if (Options.InfoRenderingScale <= 0) return;
 
-		CreateExporter("info image", "info.png").Prepare(path =>
+		CreateExporter("info image", Options.InputsOutputs[index].OutputInfoImageStream).Prepare(stream =>
 		{
 			new CharsImageExporter
 			{
@@ -706,24 +732,16 @@ public class CharsRunner : BaseRunner
 				CharInfo = Options.CharData,
 				CharsBaseAddress = Options.CharsBaseAddress
 			}
-			.Draw(path);
+			.Draw(stream);
 		});
 	}
 
-	private Exporter CreateExporter(string description, string filename)
+	private Exporter CreateExporter(string description, IStreamProvider provider)
 	{
-		// Prefer explicit output folder, but fall down to layers root folder.
-		var path = Options.OutputFolder?.FullName ?? ExportData.RootFolder;
-
-		// Prepare the filename from name template.
-		var name = Options.OutputNameTemplate
-			.Replace("{level}", ExportData.LevelName)
-			.Replace("{filename}", filename);
-
 		return new()
 		{
 			LogDescription = description,
-			Filename = Path.Combine(path, name),
+			Stream = provider
 		};
 	}
 
@@ -742,7 +760,7 @@ public class CharsRunner : BaseRunner
 
 		if (Options.BaseCharsImage != null)
 		{
-			Logger.Debug.Option($"Base characters will be generated from: {Path.GetFileName(Options.BaseCharsImage.FullName)}");
+			Logger.Debug.Option($"Base characters will be generated from: {Path.GetFileName(Options.BaseCharsImage.GetFilename())}");
 			Logger.Debug.Option("Additional characters will be generated from layer images");
 		}
 		else
@@ -792,11 +810,15 @@ public class CharsRunner : BaseRunner
 		{
 			throw new ArgumentException("Too many characters to fit 2 bytes, adjust source files");
 		}
+	}
 
-		if (ExportData.Palette.Count > 256)
-		{
-			throw new ArgumentException("Too many palette entries, adjust source files to use less colours");
-		}
+	/// <summary>
+	/// Clears parsed data before each input.
+	/// </summary>
+	private void ClearParsedData()
+	{
+		MergedLayers = new();
+		ExportData = new();
 	}
 
 	#endregion
@@ -806,13 +828,9 @@ public class CharsRunner : BaseRunner
 	public class OptionsType
 	{
 		/// <summary>
-		/// Array of input files or folders.
-		/// 
-		/// Each input can be one of:
-		/// - folder where simplified level data is exported (`data.json` file is expected to be present in this folder)
-		/// - path to simplified level `data.json` file (including `data.json` file name)
+		/// The array of all inputs and output.
 		/// </summary>
-		public FileInfo[] Inputs { get; set; } = null!;
+		public InputOutput[] InputsOutputs { get; init; } = null!;
 
 		/// <summary>
 		/// Optional external characters image.
@@ -821,27 +839,7 @@ public class CharsRunner : BaseRunner
 		/// 
 		/// If this image is not provided, then all characters will be auto-generated from source images. This is the simplest way of using the converter, however characters order may vary between different calls, according to changes in source images.
 		/// </summary>
-		public FileInfo? BaseCharsImage { get; set; }
-
-		/// <summary>
-		/// Output folder.
-		/// 
-		/// All generated data files will be generated in this folder. See also <see cref="OutputNameTemplate"/>.
-		/// </summary>
-		public FileInfo? OutputFolder { get; set; } = null!;
-
-		/// <summary>
-		/// Template for output filenames.
-		/// 
-		/// The following placeholders can be used:
-		/// - {level} placeholder is replaced with level (input) name
-		/// - {filename} placeholder is replaced by output file name
-		/// 
-		/// Placeholders are replaced with corresponding data based on parsed values.
-		/// 
-		/// Note: since each level is exported to multiple files, this approach is used to provide some flexibility in naming each file while keeping command line simple. For example user might want to save all files for each level into its own subfolder (for example: `{level}\{name}-{suffix}` which would generate something like: `level1\level-chars.bin` etc). In the future we could think of adding each specific filename as its own cmd line option.
-		/// </summary>
-		public string OutputNameTemplate { get; set; } = null!;
+		public IStreamProvider? BaseCharsImage { get; set; }
 
 		/// <summary>
 		/// Specifies whether multiple layers should result in RRB output.
@@ -926,6 +924,45 @@ public class CharsRunner : BaseRunner
 			NCM
 		}
 
+		public class InputOutput
+		{
+			/// <summary>
+			/// Input stream provider.
+			/// </summary>
+			public IStreamProvider Input { get; init; } = null!;
+
+
+			/// <summary>
+			/// Output character stream provider.
+			/// </summary>
+			public IStreamProvider OutputCharsStream { get; init; } = null!;
+
+			/// <summary>
+			/// Output palette stream provider.
+			/// </summary>
+			public IStreamProvider OutputPaletteStream { get; init; } = null!;
+
+			/// <summary>
+			/// Output screen data stream provider.
+			/// </summary>
+			public IStreamProvider OutputScreenStream { get; init; } = null!;
+
+			/// <summary>
+			/// Output colours data stream provider.
+			/// </summary>
+			public IStreamProvider OutputColourStream { get; init; } = null!;
+
+			/// <summary>
+			/// Output info data stream provider.
+			/// </summary>
+			public IStreamProvider OutputInfoDataStream { get; init; } = null!;
+
+			/// <summary>
+			/// Output info image stream provider.
+			/// </summary>
+			public IStreamProvider OutputInfoImageStream { get; init; } = null!;
+		}
+
 		#endregion
 	}
 
@@ -933,7 +970,7 @@ public class CharsRunner : BaseRunner
 	{
 		#region Options
 
-		private Argument<FileInfo[]> inputFolders = new(
+		private Argument<FileInfo[]> inputs = new(
 			name: "input",
 			description: "One or more input files or folders"
 		)
@@ -944,23 +981,6 @@ public class CharsRunner : BaseRunner
 		private Option<FileInfo?> baseCharsImage = new(
 			aliases: new[] { "-c", "--chars" },
 			description: "Optional base characters image"
-		);
-
-		private Option<FileInfo?> outputFolder = new(
-			aliases: new[] { "-o", "--out-folder" },
-			description: "Folder to generate output in; input folder if not specified"
-		);
-
-		private Option<string> outputFileTemplate = new(
-			aliases: new[] { "-n", "--out-name" },
-			description: string.Join("\n", new string[] 			
-			{
-				"Name prefix to use for output generation. Can also include subfolder(s). Placeholders:",
-				"- {level} placeholder is replaced with level name",
-				"- {filename} placeholder is replaced by output file name",
-				""	// this is used so default value is written in new line
-			}),
-			getDefaultValue: () => "{level}\\{filename}"
 		);
 
 		private Option<OptionsType.CharColourType> tileType = new(
@@ -1009,12 +1029,49 @@ public class CharsRunner : BaseRunner
 
 		protected override OptionsType GetBoundValue(BindingContext bindingContext)
 		{
+			IStreamProvider? Provider(FileInfo? info)
+			{
+				return info != null
+					? (IStreamProvider)new FileStreamProvider { FileInfo = info }
+					: null;
+			}
+
+			OptionsType.InputOutput CreateStreamProviders(FileInfo input)
+			{
+				IStreamProvider OutputProvider(string filename)
+				{
+					var isFolder = (input.Attributes & FileAttributes.Directory) != 0;
+
+					// Prepare folder name. This is either the input if it's a folder, or given input's parent folder.
+					var folder = isFolder
+						? input.FullName
+						: Path.GetDirectoryName(input.FullName);
+
+					// Prepare path without filename. If we have a folder, then that's that, otherwise we add a subfolder with the input name into which we'll create the outputs.
+					var path = isFolder
+						? folder
+						: Path.Combine(folder!, Path.GetFileNameWithoutExtension(input.FullName));
+
+					// Prepare stream provider for a file with the given name inside parent folder.
+					return Provider(new FileInfo(Path.Combine(path!, filename)))!;
+				}
+
+				return new OptionsType.InputOutput
+				{
+					Input = new FileStreamProvider { FileInfo = input },
+					OutputCharsStream = OutputProvider("chars.bin"),
+					OutputPaletteStream = OutputProvider("chars.pal"),
+					OutputScreenStream = OutputProvider("screen.bin"),
+					OutputColourStream = OutputProvider("colour.bin"),
+					OutputInfoDataStream = OutputProvider("screen.inf"),
+					OutputInfoImageStream = OutputProvider("info.png")
+				};
+			}
+
 			return new OptionsType
 			{
-				Inputs = bindingContext.ParseResult.GetValueForArgument(inputFolders),
-				BaseCharsImage = bindingContext.ParseResult.GetValueForOption(baseCharsImage),
-				OutputFolder = bindingContext.ParseResult.GetValueForOption(outputFolder),
-				OutputNameTemplate = bindingContext.ParseResult.GetValueForOption(outputFileTemplate)!,
+				InputsOutputs = bindingContext.ParseResult.GetValueForArgument(inputs).Select(CreateStreamProviders).ToArray(),
+				BaseCharsImage = Provider(bindingContext.ParseResult.GetValueForOption(baseCharsImage)),
 				CharsBaseAddress = bindingContext.ParseResult.GetValueForOption(charBaseAddress)!.ParseAsInt(),
 				CharColour = bindingContext.ParseResult.GetValueForOption(tileType),
 				IsRasterRewriteBufferSupported = bindingContext.ParseResult.GetValueForOption(rasterRewriteBuffer),

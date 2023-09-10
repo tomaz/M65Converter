@@ -4,6 +4,7 @@ using M65Converter.Sources.Helpers.Utils;
 using static M65Converter.Sources.Data.Models.LevelData;
 
 using System.Text.Json;
+using M65Converter.Sources.Data.Providers;
 
 namespace M65Converter.Sources.Data.Parsing;
 
@@ -15,13 +16,14 @@ public class LDtkSimplifiedExportParser
 	#region Parsing
 
 	/// <summary>
-	/// Parses data from `data.json` file.
+	/// Parses data from the given stream.
 	/// </summary>
-	public LevelData Parse(string path)
+	public LevelData Parse(IStreamProvider source)
 	{
 		// Load the data JSON file.
-		Logger.Verbose.Message($"Parsing {Path.GetFileName(path)}");
-		var json = new StreamReader(File.OpenRead(path)).ReadToEnd();
+		Logger.Verbose.Message($"Parsing {Path.GetFileName(source.GetFilename())}");
+		var stream = source.GetStream(FileMode.Open);
+		var json = new StreamReader(stream).ReadToEnd();
 		var data = JsonSerializer.Deserialize<LDtkJsonData>(json, new JsonSerializerOptions
 		{
 			PropertyNameCaseInsensitive = true
@@ -34,8 +36,9 @@ public class LDtkSimplifiedExportParser
 		}
 
 		// Load all layer images.
+		// Note: at the moment this always assumes file content, it's not possible to pass data as memory stream (for unit testing).
 		Logger.Verbose.Message("Loading layers");
-		var inputPath = Path.GetDirectoryName(path)!;
+		var inputPath = Path.GetDirectoryName(source.GetFilename())!;
 		var layers = data.Layers.Select(filename =>
 		{
 			Logger.Verbose.Option($"{filename}");
@@ -52,7 +55,7 @@ public class LDtkSimplifiedExportParser
 		});
 
 		// Get additional data.
-		var rootAndLevelName = LevelRootFolder(path);
+		var rootAndLevelName = LevelRootFolder(source.GetFilename());
 
 		// Prepare result.
 		return new LevelData

@@ -21,6 +21,7 @@ public class ImagesContainer
 	public int TransparentImageIndex { get; private set; }
 
 	private List<ImageData> images = new();
+	private int restorePointIndex = 0;
 
 	#region Managing data
 
@@ -115,6 +116,33 @@ public class ImagesContainer
 			WasAdded = true,
 			ItemIndex = images.Count - 1,
 		};
+	}
+
+	#endregion
+
+	#region Restore point
+
+	/// <summary>
+	/// Sets restore point to current data.
+	/// </summary>
+	public void SetRestorePoint()
+	{
+		restorePointIndex = images.Count - 1;
+	}
+
+	/// <summary>
+	/// Resets data to last set restore point.
+	/// 
+	/// If restore point was never set, this is the same as calling <see cref="Clear"/>.
+	/// </summary>
+	public void ResetDataToRestorePoint()
+	{
+		if (restorePointIndex >= images.Count) return;
+
+		images.RemoveRange(
+			index: restorePointIndex, 
+			count: images.Count - restorePointIndex
+		);
 	}
 
 	#endregion

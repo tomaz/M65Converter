@@ -1,4 +1,5 @@
-﻿using M65Converter.Sources.Helpers.Utils;
+﻿using M65Converter.Sources.Data.Providers;
+using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Exporting.Utils;
 
@@ -15,16 +16,18 @@ public class Exporter
 	public string LogDescription { get; init; } = null!;
 
 	/// <summary>
-	/// The path and filename to export to.
+	/// Output stream provider.
 	/// </summary>
-	public string Filename { get; init; } = null!;
+	public IStreamProvider Stream { get; init; } = null!;
+
+	private string Filename { get => Stream.GetFilename(); }
 
 	#region Exporting
 
 	/// <summary>
 	/// Prepares everything for export and calls the given action with the full path to the expected output file.
 	/// </summary>
-	public void Prepare(Action<string> handler)
+	public void Prepare(Action<IStreamProvider> handler)
 	{
 		Logger.Debug.Separator();
 
@@ -36,11 +39,9 @@ public class Exporter
 		{
 			Logger.Verbose.Message($"{Filename}");
 
-			Directory.CreateDirectory(Path.GetDirectoryName(Filename)!);
+			handler(Stream);
 
-			handler(Filename);
-
-			Logger.Debug.Message($"{new FileInfo(Filename).Length:#,0} bytes");
+			Logger.Debug.Message($"{Stream.GetLength():#,0} bytes");
 		});
 	}
 
@@ -49,9 +50,9 @@ public class Exporter
 	/// </summary>
 	public void Export(Action<BinaryWriter> handler)
 	{
-		Prepare(path =>
+		Prepare(stream =>
 		{
-			using var writer = new BinaryWriter(new FileStream(Filename, FileMode.Create));
+			using var writer = new BinaryWriter(stream.GetStream(FileMode.CreateNew));
 			handler(writer);
 		});
 	}

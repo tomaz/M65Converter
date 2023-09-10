@@ -20,6 +20,7 @@ public class LayerMergerSingle : LayerMerger
 
 		if (source.CompositeLayer != null && Options.IsCompositeImageAllowed)
 		{
+			// If we have composite layer image and caller allows using it, prefer that. Composite image takes into consideration layer transparency and blending mode, so is more accurate, but is more prone to colours overflow since every blended colour needs to be added to palette.
 			Logger.Verbose.Option("Taking composite image");
 			mergedImage = source.CompositeLayer.Image;
 		}

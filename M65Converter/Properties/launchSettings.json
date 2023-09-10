@@ -2,7 +2,7 @@
   "profiles": {
     "M65Converter": {
       "commandName": "Project",
-      "commandLineArgs": "-v debug\r\nchars\r\n--info 2\r\n--colour ncm\r\n--chars-address $20000\r\n--out-folder ..\\..\\..\\..\\KickAssembler\\build\\assets\\\r\n--out-name \"{level}\\{filename}\"\r\n..\\..\\..\\..\\KickAssembler\\assets\\ldtk\\level\\simplified\\AutoLayer"
+      "commandLineArgs": "-v verbose\r\nchars\r\n--info 1\r\n--colour fcm\r\n--chars-address $20000\r\n..\\..\\..\\..\\KickAssembler\\assets\\aseprite\\level1.aseprite"
     }
   }
 }

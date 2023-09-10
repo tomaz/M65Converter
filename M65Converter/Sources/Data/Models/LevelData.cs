@@ -1,5 +1,6 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Parsing;
+using M65Converter.Sources.Data.Providers;
 
 namespace M65Converter.Sources.Data.Models;
 
@@ -41,7 +42,7 @@ public class LevelData
 	#region Initialization & Disposal
 
 	/// <summary>
-	/// Parses input. Input path can etiher be:
+	/// Parses input. Input can etiher be:
 	/// 
 	/// - folder: `data.json` file is taken from the folder)
 	/// - JSON file: it's expected to be simplified export JSON data
@@ -49,31 +50,36 @@ public class LevelData
 	/// 
 	/// Either way, the method creates new <see cref="LevelData"/> instance describing parsed data.
 	/// </summary>
-	public static LevelData Parse(FileInfo input)
+	public static LevelData Parse(IStreamProvider input)
 	{
+		var provider = input;
+
 		// If path is directory search, we assume it's LDtk simplified export so we prepare for `data.json` file in it.
-		var path = input.FullName;
-		var attributes = File.GetAttributes(path);
-		if ((attributes & FileAttributes.Directory) != 0)
+		// Note: don't use folder memory streams, this code assumes the paths are valid.
+		if (input.IsFolder())
 		{
-			path = Path.Combine(path, "data.json");
+			var path = Path.Combine(input.GetFilename(), "data.json");
+			provider = new FileStreamProvider
+			{
+				FileInfo = new FileInfo(path)
+			};
 		}
 
 		// If path points to a `data.json`, use LDtk parser.
-		if (Path.GetFileName(path) == "data.json")
+		if (Path.GetFileName(provider.GetFilename()) == "data.json")
 		{
-			return new LDtkSimplifiedExportParser().Parse(path);
+			return new LDtkSimplifiedExportParser().Parse(provider);
 		}
 
 		// If path points to Aseprite file, use Aseprite parser.
-		var extension = Path.GetExtension(path);
+		var extension = Path.GetExtension(provider.GetFilename());
 		if (extension == ".ase" || extension == ".aseprite")
 		{
-			return new AsepriteLevelParser().Parse(path);
+			return new AsepriteLevelParser().Parse(provider);
 		}
 
 		// Otherwise we don't know how to parse so throw exception.
-		throw new InvalidDataException($"Unknown input type {path}");
+		throw new InvalidDataException($"Unknown input type {provider.GetFilename()}");
 	}
 
 	#endregion

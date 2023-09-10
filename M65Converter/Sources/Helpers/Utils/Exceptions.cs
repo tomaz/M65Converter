@@ -1,11 +1,11 @@
 ﻿namespace M65Converter.Sources.Helpers.Utils;
 
 /// <summary>
-/// Thrown when 4-bit palette validation fails.
+/// Thrown when palette validation fails - aka too many colours.
 /// </summary>
-public class Invalid4BitPaletteException : Exception
+public class InvalidCompositeImageDataException : Exception
 {
-	public Invalid4BitPaletteException(string message, Exception? inner = null) : base(message, inner)
+	public InvalidCompositeImageDataException(string message, Exception? inner = null) : base(message, inner)
 	{
 	}
 }

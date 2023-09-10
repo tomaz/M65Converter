@@ -1,4 +1,5 @@
 ﻿using M65Converter.Sources.Data.Models;
+using M65Converter.Sources.Data.Providers;
 using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Data.Parsing;
@@ -10,10 +11,11 @@ public class AsepriteLevelParser
 {
 	#region Parsing
 
-	public LevelData Parse(string path)
+	public LevelData Parse(IStreamProvider source)
 	{
+		var path = source.GetFilename();
 		Logger.Verbose.Message($"Parsing {Path.GetFileName(path)}");
-		var aseprite = AsepriteData.Parse(path);
+		var aseprite = AsepriteData.Parse(source);
 
 		// For levels we assume there's only 1 frame. But if more, we always take the first.
 		Logger.Verbose.Message("Preparing layers");

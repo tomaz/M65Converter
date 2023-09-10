@@ -1,11 +1,6 @@
-﻿using M65Converter.Sources.Helpers.Images;
+﻿using M65Converter.Sources.Data.Providers;
+using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Utils;
-
-using SixLabors.Fonts;
-
-using System.Reflection;
-
-using static System.Formats.Asn1.AsnWriter;
 
 namespace M65Converter.Sources.Exporting.Images;
 
@@ -55,7 +50,7 @@ public abstract class BaseImageExporter
 	/// <summary>
 	/// Draws all the data into the image saved to the given path.
 	/// </summary>
-	public void Draw(string path)
+	public void Draw(IStreamProvider output)
 	{
 		OnResetCalculations();
 
@@ -85,7 +80,7 @@ public abstract class BaseImageExporter
 			OnDraw(drawings);
 		});
 
-		image.Save(path);
+		image.Save(output);
 	}
 
 	#endregion

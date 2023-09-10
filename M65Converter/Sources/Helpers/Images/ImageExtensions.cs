@@ -1,8 +1,11 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Models;
+using M65Converter.Sources.Data.Providers;
 using M65Converter.Sources.Helpers.Utils;
 
 using SixLabors.ImageSharp.Drawing.Processing;
+
+using System.Windows.Markup;
 
 namespace M65Converter.Sources.Helpers.Images;
 
@@ -40,6 +43,24 @@ public static class ImageExtensions
 			location: new Point(destination.X, destination.Y),
 			opacity: 1f
 		);
+	}
+
+	/// <summary>
+	/// Saves the image using the given stream provider.
+	/// </summary>
+	public static void Save(this Image<Argb32> image, IStreamProvider output)
+	{
+		Stream GetStream() => output.GetStream(FileMode.CreateNew);
+
+		switch (Path.GetExtension(output.GetFilename()).ToLower())
+		{
+			case ".bmp": image.SaveAsBmp(GetStream()); break;
+			case ".png": image.SaveAsPng(GetStream()); break;
+			case ".jpg": image.SaveAsJpeg(GetStream()); break;
+			case ".jpeg": image.SaveAsJpeg(GetStream()); break;
+			case ".gif": image.SaveAsGif(GetStream()); break;
+			default: throw new InvalidDataException($"Unsupported image file type {output.GetFilename()}");
+		}
 	}
 
 	/// <summary>

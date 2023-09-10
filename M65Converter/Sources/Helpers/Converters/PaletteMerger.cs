@@ -62,9 +62,35 @@ public abstract class PaletteMerger
 
 		OnMerge(Options.Images, result);
 
+		if (result.Count > 256)
+		{
+			ThrowException($"Too many colours ({result.Count} found, 256 allowed). Adjust source files to use less colours");
+		}
+
 		Logger.Debug.Message($"{result.Count} palette colours used");
 
 		return result;
+	}
+
+	#endregion
+
+	#region Helpers
+
+	/// <summary>
+	/// Throws an exception.
+	/// 
+	/// The main responsibility of this method is to select exception type based on options.
+	/// </summary>
+	protected void ThrowException(string message, Exception? inner = null)
+	{
+		if (Options.IsCompositeImage)
+		{
+			throw new InvalidCompositeImageDataException(message, inner);
+		}
+		else
+		{
+			throw new InvalidDataException(message, inner);
+		}
 	}
 
 	#endregion
@@ -76,17 +102,22 @@ public abstract class PaletteMerger
 		/// <summary>
 		/// Specifies whether we require 4-bit or 8-bit colours.
 		/// </summary>
-		public bool Is4Bit { get; set; }
+		public bool Is4Bit { get; init; }
 
 		/// <summary>
 		/// Indicates whether transparency should be used or not.
 		/// </summary>
-		public bool IsUsingTransparency { get; set; }
+		public bool IsUsingTransparency { get; init; }
+
+		/// <summary>
+		/// Specifies whether the palette is created from composite image or not.
+		/// </summary>
+		public bool IsCompositeImage { get; init; }
 
 		/// <summary>
 		/// The list of all source images.
 		/// </summary>
-		public IReadOnlyList<ImageData> Images { get; set;} = null!;
+		public IReadOnlyList<ImageData> Images { get; init; } = null!;
 	}
 
 	#endregion

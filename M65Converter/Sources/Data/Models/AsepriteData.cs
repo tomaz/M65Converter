@@ -1,7 +1,7 @@
-﻿using M65Converter.Sources.Helpers.Images;
+﻿using M65Converter.Sources.Data.Providers;
+using M65Converter.Sources.Helpers.Images;
 
 using System.IO.Compression;
-using System.Runtime.Serialization;
 using System.Text;
 
 namespace M65Converter.Sources.Data.Models;
@@ -26,9 +26,9 @@ public class AsepriteData
 	/// <summary>
 	/// Parses data from the given Aseprite file and returns an instance of <see cref="AsepriteData"/>.
 	/// </summary>
-	public static AsepriteData Parse(string path)
+	public static AsepriteData Parse(IStreamProvider provider)
 	{
-		var reader = new BinaryReader(File.OpenRead(path));
+		var reader = new BinaryReader(provider.GetStream(FileMode.Open));
 
 		var header = AsepriteHeaderType.Parse(reader);
 		var frames = new List<AsepriteFrameType>();
