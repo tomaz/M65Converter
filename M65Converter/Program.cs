@@ -1,20 +1,21 @@
-﻿using M65Converter.Sources.Helpers.Inputs;
+﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Helpers.Inputs;
 using M65Converter.Sources.Helpers.Utils;
-using M65Converter.Sources.Runners;
 
 using System.CommandLine;
 
-Command CreateRootCommand()
+static Command CreateRootCommand(DataContainer data)
 {
 	var result = new RootCommand(description: "Converter for various mega 65 related files");
 
 	result.AddGlobalOption(GlobalOptions.VerbosityOption);
-	result.AddCommand(new CharsRunner.OptionsBinder().CreateCommand());
+	result.AddCommand(new ScreensOptionsBinder().CreateCommand(data));
 
 	return result;
 }
 
 var result = 0;
+var data = new DataContainer();
 
 new TimeRunner
 {
@@ -24,7 +25,9 @@ new TimeRunner
 }
 .Run(() =>
 {
-	result = CreateRootCommand().Invoke(args);
+	result = CreateRootCommand(data).Invoke(args);
+
+	data.ExportGeneratedData();
 });
 
 return result;

@@ -1,4 +1,5 @@
-﻿using M65Converter.Sources.Helpers.Utils;
+﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Runners;
 
@@ -13,6 +14,13 @@ namespace M65Converter.Runners;
 /// </summary>
 public abstract class BaseRunner
 {
+	/// <summary>
+	/// The data container where all parsed data is saved into.
+	/// 
+	/// The data instance is shared between all runners, so each subsequent one can append data as needed.
+	/// </summary>
+	public DataContainer Data { get; set; } = null!;
+
 	#region Subclass
 
 	/// <summary>

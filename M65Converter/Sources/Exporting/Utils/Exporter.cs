@@ -25,7 +25,7 @@ public class Exporter
 	#region Exporting
 
 	/// <summary>
-	/// Prepares everything for export and calls the given action with the full path to the expected output file.
+	/// Prepares everything for export and calls the given action with the stream provider to write to.
 	/// </summary>
 	public void Prepare(Action<IStreamProvider> handler)
 	{
@@ -53,6 +53,7 @@ public class Exporter
 		Prepare(stream =>
 		{
 			using var writer = new BinaryWriter(stream.GetStream(FileMode.CreateNew));
+
 			handler(writer);
 		});
 	}

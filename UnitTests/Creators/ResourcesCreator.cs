@@ -1,4 +1,6 @@
-﻿using UnitTests.Models;
+﻿using M65Converter.Sources.Helpers.Inputs;
+
+using UnitTests.Models;
 
 namespace UnitTests.Creators;
 
@@ -13,25 +15,17 @@ public static class ResourcesCreator
 		};
 	}
 
-	public static CharsCreator CharsOutput() => new();
-
-	public static PaletteCreator PaletteOutput() => new();
-
-	public static ScreenCreator ScreenOutput() => new();
-
-	public static ColourCreator ColourOutput() => new();
-
 	#region Declarations
 
 	public class CharsCreator : BaseCreator
 	{
-		public override MemoryStreamProvider Get()
+		protected override MemoryStreamProvider CreateStreamProvider()
 		{
 			return new MemoryStreamProvider
 			{
-				Data = CharsType switch
+				Data = CharType switch
 				{
-					CharsType.NCM => 
+					ScreenOptionsType.CharColourType.NCM => 
 						IsRRBEnabled 
 							? Resources.export_ncm_rrb_chars 
 							: Resources.export_ncm_chars,
@@ -49,13 +43,13 @@ public static class ResourcesCreator
 
 	public class PaletteCreator : BaseCreator
 	{
-		public override MemoryStreamProvider Get()
+		protected override MemoryStreamProvider CreateStreamProvider()
 		{
 			return new MemoryStreamProvider
 			{
-				Data = CharsType switch
+				Data = CharType switch
 				{
-					CharsType.NCM =>
+					ScreenOptionsType.CharColourType.NCM =>
 						IsRRBEnabled
 							? Resources.export_ncm_rrb_palette
 							: Resources.export_ncm_palette,
@@ -73,13 +67,13 @@ public static class ResourcesCreator
 
 	public class ScreenCreator : BaseCreator
 	{
-		public override MemoryStreamProvider Get()
+		protected override MemoryStreamProvider CreateStreamProvider()
 		{
 			return new MemoryStreamProvider
 			{
-				Data = CharsType switch
+				Data = CharType switch
 				{
-					CharsType.NCM =>
+					ScreenOptionsType.CharColourType.NCM =>
 						IsRRBEnabled
 							? Resources.export_ncm_rrb_screen
 							: Resources.export_ncm_screen,
@@ -97,13 +91,13 @@ public static class ResourcesCreator
 
 	public class ColourCreator : BaseCreator
 	{
-		public override MemoryStreamProvider Get()
+		protected override MemoryStreamProvider CreateStreamProvider()
 		{
 			return new MemoryStreamProvider
 			{
-				Data = CharsType switch
+				Data = CharType switch
 				{
-					CharsType.NCM =>
+					ScreenOptionsType.CharColourType.NCM =>
 						IsRRBEnabled
 							? Resources.export_ncm_rrb_colour
 							: Resources.export_ncm_colour,
@@ -121,22 +115,19 @@ public static class ResourcesCreator
 
 	public abstract class BaseCreator
 	{
-		protected CharsType CharsType { get; private set; }
-		protected bool IsRRBEnabled { get; private set; }
+		public ScreenOptionsType.CharColourType CharType { get; init; }
+		public bool IsRRBEnabled { get; init; }
 
-		public BaseCreator Chars(CharsType type)
+		private MemoryStreamProvider? provider;
+
+		protected abstract MemoryStreamProvider CreateStreamProvider();
+
+		public MemoryStreamProvider Get()
 		{
-			CharsType = type;
-			return this;
-		}
+			provider ??= CreateStreamProvider();
 
-		public BaseCreator RRB(bool enabled)
-		{
-			IsRRBEnabled = enabled;
-			return this;
+			return provider;
 		}
-
-		public abstract MemoryStreamProvider Get();
 	}
 
 	#endregion

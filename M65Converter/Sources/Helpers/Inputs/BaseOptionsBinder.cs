@@ -3,6 +3,7 @@ using System.CommandLine.Binding;
 using System.Globalization;
 using System.Reflection;
 using M65Converter.Runners;
+using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Helpers.Inputs;
@@ -25,13 +26,14 @@ public abstract class BaseOptionsBinder<T> : BinderBase<T>
 	#region Subclass
 
 	protected abstract Command OnCreateCommand();
-	protected abstract BaseRunner OnCreateRunner(T options);
+	protected abstract void OnAssignOptions(T options, DataContainer data);
+	protected abstract BaseRunner OnCreateRunner(T options, DataContainer data);
 
 	#endregion
 
 	#region Helpers
 
-	public Command CreateCommand()
+	public Command CreateCommand(DataContainer data)
 	{
 		var result = OnCreateCommand();
 
@@ -58,7 +60,8 @@ public abstract class BaseOptionsBinder<T> : BinderBase<T>
 			{
 				Logger.Verbosity = verbosity;
 
-				OnCreateRunner(options).Run();
+				OnAssignOptions(options, data);
+				OnCreateRunner(options, data).Run();
 			}
 			catch (Exception e)
 			{
