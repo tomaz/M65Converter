@@ -1,29 +1,31 @@
 ﻿using M65Converter.Sources.Helpers.Utils;
 
-namespace M65Converter.Sources.Exporting.Utils;
+namespace M65Converter.Sources.Exporting;
 
 /// <summary>
-/// Exports a given palette to format compatible with Mega 65 hardware.
-/// 
-/// Note: this is a simpler helper class with sole purpose of unifying palette export accross different exporters.
+/// Exports a given Palette to format compatible with Mega 65 hardware.
 /// </summary>
-public class PaletteExporter
+public class PaletteExporter : BaseExporter
 {
 	/// <summary>
-	/// Exports the given palette to the given writer.
+	/// The Palette to export.
 	/// </summary>
-	public void Export(IReadOnlyList<Argb32> palette, BinaryWriter writer)
+	public IReadOnlyList<Argb32> Palette { get; init; } = null!;
+
+	#region Overrides
+
+	public override void Export(BinaryWriter writer)
 	{
 		Logger.Verbose.Message("Format:");
-		Logger.Verbose.Option($"First all {palette.Count} red values");
-		Logger.Verbose.Option($"Followed by {palette.Count} green values");
-		Logger.Verbose.Option($"Followed by {palette.Count} blue values");
+		Logger.Verbose.Option($"First all {Palette.Count} red values");
+		Logger.Verbose.Option($"Followed by {Palette.Count} green values");
+		Logger.Verbose.Option($"Followed by {Palette.Count} blue values");
 		Logger.Verbose.Option("Each RGB component is 1 byte");
 
 		// Note: the only reason for swapping in advance vs. on the fly is to get more meaningful verbose output.
-		var swapped = ConvertToMega65Format(palette);
+		var swapped = ConvertToMega65Format(Palette);
 
-		// If needed, log out the palette.
+		// If needed, log out the Palette.
 		if (Logger.Verbose.IsEnabled)
 		{
 			var formatter = new TableFormatter
@@ -44,7 +46,7 @@ public class PaletteExporter
 			}
 
 			Logger.Verbose.Separator();
-			Logger.Verbose.Message("Exported palette:");
+			Logger.Verbose.Message("Exported Palette:");
 			formatter.Log(Logger.Verbose.Option);
 		}
 
@@ -60,6 +62,8 @@ public class PaletteExporter
 		Export((colour) => colour.G);
 		Export((colour) => colour.B);
 	}
+
+	#endregion
 
 	#region Helpers
 

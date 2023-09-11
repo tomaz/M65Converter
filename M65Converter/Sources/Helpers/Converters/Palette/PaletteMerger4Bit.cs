@@ -50,7 +50,7 @@ public class PaletteMerger4Bit : PaletteMerger
 			var count = image.Palette.CountWithTransparent(Options.IsUsingTransparency);
 			if (count > MaxColoursPerBank)
 			{
-				ThrowException($"Image {index} requires {count} colours, 4-bit mode only supports up to {MaxColoursPerBank}!");
+				throw new InvalidDataException($"Image {index} requires {count} colours, 4-bit mode only supports up to {MaxColoursPerBank}!");
 			}
 		}
 	}
@@ -166,7 +166,7 @@ public class PaletteMerger4Bit : PaletteMerger
 		// When all images are handled, validate banks count is valid.
 		if (result.Count > MaxBanks)
 		{
-			throw new InvalidCompositeImageDataException($"Couldn't fit all chars into {MaxBanks} banks ({result.Count} banks are needed)");
+			throw new InvalidDataException($"Couldn't fit all chars into {MaxBanks} banks ({result.Count} banks are needed)");
 		}
 
 		return result;

@@ -33,6 +33,7 @@ public class LayerMergerSingle : LayerMerger
 		var mergedLayer = new LevelData.LayerData
 		{
 			Path = Path.Combine(Path.GetDirectoryName(source.Layers.First().Path)!, "MergedLayer"),
+			Name = source.Layers.First().Name,
 			Image = mergedImage
 		};
 

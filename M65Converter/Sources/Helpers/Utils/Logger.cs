@@ -42,6 +42,11 @@ public static class Logger
 			if (IsEnabled) Console.WriteLine();
 		}
 
+		public void Exclamation(string message)
+		{
+			if (IsEnabled) Console.WriteLine($">>>>> {message}");
+		}
+
 		public void Message(string message)
 		{
 			if (IsEnabled) Console.WriteLine(message);

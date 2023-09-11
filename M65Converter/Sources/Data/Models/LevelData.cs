@@ -5,7 +5,7 @@ using M65Converter.Sources.Data.Providers;
 namespace M65Converter.Sources.Data.Models;
 
 /// <summary>
-/// Describes level.
+/// Describes source level.
 /// </summary>
 public class LevelData
 {

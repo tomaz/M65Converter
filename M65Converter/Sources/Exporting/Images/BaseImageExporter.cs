@@ -1,4 +1,5 @@
-﻿using M65Converter.Sources.Data.Providers;
+﻿using M65Converter.Sources.Data.Intermediate;
+using M65Converter.Sources.Data.Providers;
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Utils;
 
@@ -10,9 +11,9 @@ namespace M65Converter.Sources.Exporting.Images;
 public abstract class BaseImageExporter
 {
 	/// <summary>
-	/// The scale at which to draw. Should be 1 or greater.
+	/// All the options and data.
 	/// </summary>
-	public int Scale { get; set; } = 1;
+	public DataContainer Data { get; init; } = null!;
 
 	private static Point ImagePadding = new(8, 8);
 	private static Point TextToDataMargin = new(2, 2);
@@ -55,7 +56,7 @@ public abstract class BaseImageExporter
 		OnResetCalculations();
 
 		// Ask subclass to measure the size it needs for drawing.
-		var measures = new Measures(Scale);
+		var measures = new Measures(Data.GlobalOptions.InfoImageRenderingScale);
 		var imageSize = OnCalculateDrawingSize(measures);
 
 		// Append bottom right image padding.

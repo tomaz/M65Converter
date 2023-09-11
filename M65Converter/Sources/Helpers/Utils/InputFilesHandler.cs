@@ -12,12 +12,12 @@ public class InputFilesHandler
 	/// <summary>
 	/// Optional title for console output.
 	/// </summary>
-	public string? Title { get; init; }
+	public string? TitlePrefix { get; init; }
 
 	/// <summary>
 	/// The array of all sources - folders or files.
 	/// </summary>
-	public IStreamProvider[] Sources { get; set; } = null!;
+	public IStreamProvider[]? Sources { get; init; }
 
 	#region Public
 
@@ -26,13 +26,16 @@ public class InputFilesHandler
 	/// </summary>
 	public void Run(Action<int, IStreamProvider> handler)
 	{
+		// If there are no sources available, 
+		if (Sources == null) return;
+
 		var index = 0;
 
 		foreach (var source in Sources)
 		{
 			Logger.Debug.Separator();
 
-			var timerTitle = Title != null ? $"{Title} " : "";
+			var timerTitle = TitlePrefix != null ? $"{TitlePrefix} " : "";
 			var filename = Path.GetFileName(source.GetFilename());
 
 			new TimeRunner
@@ -41,7 +44,7 @@ public class InputFilesHandler
 			}
 			.Run(() =>
 			{
-				Logger.Info.Message($"{source}");
+				Logger.Info.Message($"{source.GetFilename()}");
 
 				handler(index, source);
 

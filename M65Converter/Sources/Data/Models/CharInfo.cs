@@ -16,6 +16,11 @@ public class CharInfo
 	public int Height { get; init; }
 
 	/// <summary>
+	/// Char size in pixels.
+	/// </summary>
+	public Size Size { get => new(Width, Height); }
+
+	/// <summary>
 	/// Number of bytes each pixel requires.
 	/// </summary>
 	public int PixelDataSize { get; init; }

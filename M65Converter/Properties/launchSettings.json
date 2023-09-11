@@ -2,7 +2,7 @@
   "profiles": {
     "M65Converter": {
       "commandName": "Project",
-      "commandLineArgs": "-v verbose\r\nchars\r\n--info 1\r\n--colour fcm\r\n--chars-address $20000\r\n..\\..\\..\\..\\KickAssembler\\assets\\aseprite\\level1.aseprite"
+      "commandLineArgs": "--verbosity verbose\r\n--colour fcm\r\n--info 2\r\nchars\r\n--out-chars ..\\..\\..\\..\\KickAssembler\\build\\assets\\chars.bin\r\n--out-palette ..\\..\\..\\..\\KickAssembler\\build\\assets\\chars.pal\r\nscreens\r\n--chars-address $20000\r\n--out-screen ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\screen.bin\r\n--out-colour ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\colour.bin\r\n--out-lookup ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\lookup.inf\r\n--out-info ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\info.png\r\n..\\..\\..\\..\\KickAssembler\\assets\\aseprite\\level1.aseprite"
     }
   }
 }

@@ -6,9 +6,9 @@ using System.CommandLine;
 
 static Command CreateRootCommand(DataContainer data)
 {
-	var result = new RootCommand(description: "Converter for various mega 65 related files");
+	var result = new GlobalOptionsBinder().CreateCommand(data);
 
-	result.AddGlobalOption(GlobalOptions.VerbosityOption);
+	result.AddCommand(new CharsOptionsBinder().CreateCommand(data));
 	result.AddCommand(new ScreensOptionsBinder().CreateCommand(data));
 
 	return result;
@@ -20,14 +20,22 @@ var data = new DataContainer();
 new TimeRunner
 {
 	LoggerFunction = Logger.Info.Message,
-	Header = "",
-	Footer = "\r\nTotal: {Time}"
+	Header = Array.Empty<string>(),
+	Footer = new[] { "", "Total: {Time}" }
 }
 .Run(() =>
 {
-	result = CreateRootCommand(data).Invoke(args);
+	try
+	{
+		var result = CreateRootCommand(data).InvokeAllCommands(args);
 
-	data.ExportGeneratedData();
+		data.ExportData();
+	}
+	catch (Exception e)
+	{
+		Logger.Info.Separator();
+		Logger.Info.Message($"ERROR OCCURRED {e}");
+	}
 });
 
 return result;

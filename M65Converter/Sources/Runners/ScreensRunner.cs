@@ -2,11 +2,8 @@
 using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Data.Providers;
-using M65Converter.Sources.Exporting.Images;
-using M65Converter.Sources.Exporting.Utils;
 using M65Converter.Sources.Helpers.Converters;
 using M65Converter.Sources.Helpers.Images;
-using M65Converter.Sources.Helpers.Inputs;
 using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Runners;
@@ -18,76 +15,33 @@ public class ScreensRunner : BaseRunner
 {
 	#region Overrides
 
-	protected override string? Title() => "Parsing layer files";
+	protected override string? Title() => "Parsing screen and colour data";
 
 	protected override void OnValidate()
 	{
 		base.OnValidate();
 
-		if ((Data.ScreenOptions.CharsBaseAddress % Data.ScreenOptions.CharData.CharDataSize) != 0)
+		int charsAddress = Data.ScreenOptions.CharsBaseAddress;
+		int charSize = Data.GlobalOptions.CharInfo.CharDataSize;
+		if ((charsAddress % charSize) != 0)
 		{
-			var prev = (Data.ScreenOptions.CharsBaseAddress / Data.ScreenOptions.CharData.CharDataSize) * Data.ScreenOptions.CharData.CharDataSize;
-			var next = prev + Data.ScreenOptions.CharData.CharDataSize;
-			throw new ArgumentException($"Char base address must start on {Data.ScreenOptions.CharData.CharDataSize} byte boundary. C" +
-				$"For example ${prev:X} or ${next:X}");
+			var prev = (charsAddress / charSize) * charSize;
+			var next = prev + charSize;
+
+			throw new ArgumentException($"Char base address must start on {charSize} byte boundary. Consider changing to previous (${prev:X}) or next (${next:X})");
 		}
 	}
 
 	protected override void OnRun()
 	{
 		LogCmdLineDataOptions();
-		ClearData();
 
-		ParseBaseChars();
 		ParseInputs();
 	}
 
 	#endregion
 
 	#region Parsing
-
-	private void ClearData()
-	{
-		Data.CharsContainer.Clear();
-	}
-
-	/// <summary>
-	/// Parses base characters image to establish base set of chars to use.
-	/// </summary>
-	private void ParseBaseChars()
-	{
-		if (Data.ScreenOptions.BaseCharsImage == null) return;
-
-		new TimeRunner
-		{
-			Title = "Base characters"
-		}
-		.Run(() =>
-		{
-			Logger.Debug.Separator();
-			Logger.Info.Message($"---> {Data.ScreenOptions.BaseCharsImage}");
-			Logger.Debug.Message($"Adding characters from base image {Data.ScreenOptions.BaseCharsImage.GetFilename()}");
-
-			// Load the image.
-			var image = Image.Load<Argb32>(Data.ScreenOptions.BaseCharsImage.GetStream(FileMode.Open));
-
-			// For base characters we keep all transparents to achieve consistent results. With these characters it's responsibility of the creator to trim source image. Same for duplicates, we want to leave all characters to preserve positions, however when matching them on layers, it will always take the first match.
-			var result = new ImageSplitter
-			{
-				ItemWidth = Data.ScreenOptions.CharData.Width,
-				ItemHeight = Data.ScreenOptions.CharData.Height,
-				TransparencyOptions = TransparencyOptionsType.KeepAll,
-				DuplicatesOptions = DuplicatesOptionsType.KeepAll
-			}
-			.Split(image, Data.CharsContainer);
-
-			// After we parse base characters we set the restore point so we can later revert charset to base.
-			Data.CharsContainer.SetRestorePoint();
-
-			// Note: we ignore indexed image for base characters. We only need actual layers from LDtk.
-			Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} characters");
-		});
-	}
 
 	/// <summary>
 	/// Parses all inputs from cmd line arguments.
@@ -96,103 +50,27 @@ public class ScreensRunner : BaseRunner
 	/// </summary>
 	private void ParseInputs()
 	{
-		void AppendTransparentChar()
-		{
-			// Add fully transparent character if we don't yet have one. We need to have at least one fully transparent character so that we can properly setup indexed layers that contain transparent characters. If we already have transparent character (either from base characters set, or from previous layers), this will not create additional one.
-			var transparentCharAddResult = Data.CharsContainer.AddTransparentImage(
-				width: Data.ScreenOptions.CharData.Width,
-				height: Data.ScreenOptions.CharData.Height
-			);
+		var mergedLevels = new List<LevelData>();
 
-			// Log transparent character addition.
-			if (transparentCharAddResult.WasAdded)
-			{
-				Logger.Verbose.Message("Adding transparent character");
-			}
-		}
-
-		void SetupLayerData(IStreamProvider input, bool isCompositeImageAllowed)
-		{
-			void MergeLayers(LevelData data)
-			{
-				var options = new LayerMerger.OptionsType
-				{
-					IsRasterRewriteBufferSupported = Data.ScreenOptions.IsRasterRewriteBufferSupported,
-					IsCompositeImageAllowed = isCompositeImageAllowed,
-				};
-
-				Data.MergedLayers = LayerMerger
-					.Create(options)
-					.Merge(data);
-			}
-
-			void AppendExtraCharsFromLayers()
-			{
-				foreach (var layer in Data.MergedLayers.Layers)
-				{
-					Logger.Verbose.Separator();
-					Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Name)}");
-
-					// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
-					var result = new ImageSplitter
-					{
-						ItemWidth = Data.ScreenOptions.CharData.Width,
-						ItemHeight = Data.ScreenOptions.CharData.Height,
-						TransparencyOptions = TransparencyOptionsType.OpaqueOnly,
-						DuplicatesOptions = DuplicatesOptionsType.UniqueOnly
-					}
-					.Split(layer.Image, Data.CharsContainer);
-
-					// Assign indexed image to layer.
-					layer.IndexedImage = result.IndexedImage;
-
-					Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} unique characters");
-				}
-			}
-
-			// Characters (and consequently underlying palette) are updated with each input, but the rest of the export data is reset every time.
-			ClearParsedData();
-
-			// Parse input data.
-			var inputData = LevelData.Parse(input);
-
-			// Prepare all layers we need to extract chars from.
-			MergeLayers(inputData);
-
-			// Add all extra characters from individual layers.
-			AppendExtraCharsFromLayers();
-
-			Logger.Verbose.Separator();
-			Logger.Debug.Message($"{Data.CharsContainer.Images.Count} characters found");
-		}
-
-		void ConvertLayersToExportData(bool isCompositeImageAllowed)
-		{
-			// The order of these methods is important - we first need to tackle palette since this is where we adjust colours and banks which are then needed to actually generate the output data.
-			PrepareExportPalette(isCompositeImage: isCompositeImageAllowed);
-			PrepareExportData();
-			Data.ValidateParsedData();
-		}
-
-		// We only need 1 fully transparent character. If we don't yet have it from base chars, this is where we'll add it.
-		AppendTransparentChar();
-
-		// Parse all input folders.
+		// Parse all inputs.
 		new InputFilesHandler
 		{
-			Title = "Parsing",
-			Sources = Data.ScreenOptions.InputsOutputs.Select(x => x.Input).ToArray()
+			TitlePrefix = "Parsing layers from",
+			Sources = Data.ScreenOptions.Inputs
 		}
 		.Run((index, input) =>
 		{
+			LevelData? mergedLevel = null;
+
 			try
 			{
 				// First attempt to use parsed composite image. This respects layer transparency and blending modes, so yields more accurate results. However it can easily overflow the palette. If this fails, we'll fall-down to manual layer merging in catch below.
 				// Note: only certain types of inputs support composite images. If that's not supported for current input, layer merging will be used here as well.
-				SetupLayerData(input, isCompositeImageAllowed: true);
-				ConvertLayersToExportData(isCompositeImageAllowed: true);
+				// Note: we set restore point before each additinal parsing. This way we will always revert to last valid data if first attempt fails.
+				Data.CharsContainer.SetRestorePoint();
+				mergedLevel = ConvertInputToExportData(input, isCompositeImageAllowed: true);
 			}
-			catch (InvalidCompositeImageDataException e)
+			catch (Exception e)
 			{
 				// Composite image failed, let's fall down to manual layer merging. This works perfectly fine when layers don't use transparency or blending modes, but can
 				Logger.Info.Separator();
@@ -203,10 +81,28 @@ public class ScreensRunner : BaseRunner
 				Logger.Info.Message($"|| Attemting to manually merge layers (potentially less accurate output)");
 				Logger.Info.Message(" ==============================================================================");
 
-				SetupLayerData(input, isCompositeImageAllowed: false);
-				ConvertLayersToExportData(isCompositeImageAllowed: false);
+				// After failed first attempt we restore characters data and retry, this time manually merging layers.
+				Data.CharsContainer.ResetDataToRestorePoint();
+				mergedLevel = ConvertInputToExportData(input, isCompositeImageAllowed: false);
 			}
+
+			// If all went well, we should add the level to the temporary list.
+			mergedLevels.Add(mergedLevel);
 		});
+
+		// After all layers are parsed, we should prepare the rest of the data - palette and then all the screens. Note that the order is important, we should first prepare palette.
+		PrepareExportPalette();
+
+		// After palette is ready, we should prepare screen and colour data for each merged level.
+		foreach (var mergedLevel in mergedLevels)
+		{
+			// Prepare the data for export.
+			var screenData = new ScreenData();
+			PrepareExportData(mergedLevel, destination: screenData);
+
+			// If all went well (aka no exception thrown), add screen data to global results for later export. We don't export just yet since we may have additional steps that will append data later on.
+			Data.Screens.Add(screenData);
+		}
 	}
 
 	#endregion
@@ -214,9 +110,83 @@ public class ScreensRunner : BaseRunner
 	#region Converting
 
 	/// <summary>
+	/// Merges all layers from the given input.
+	/// </summary>
+	private LevelData ConvertInputToExportData(IStreamProvider input, bool isCompositeImageAllowed)
+	{
+		// Parse input data.
+		var inputLayers = LevelData.Parse(input);
+
+		// Prepare all layers we need to extract chars from.
+		var mergedLayers = MergeLayers(inputLayers, isCompositeImageAllowed);
+
+		// Add all extra characters from layers.
+		AppendExtraCharsFromLayers(mergedLayers);
+
+		// Validate all newly parsed data. This will throw exception as soon as the data becomes invalid so user can identify the input that causes the issue.
+		Data.ValidateData();
+
+		return mergedLayers;
+	}
+
+	#endregion
+
+	#region Helpers
+
+	/// <summary>
+	/// Merges all layers from the given level.
+	/// </summary>
+	private LevelData MergeLayers(LevelData data, bool isCompositeImageAllowed)
+	{
+		var options = new LayerMerger.OptionsType
+		{
+			IsRasterRewriteBufferSupported = Data.ScreenOptions.IsRasterRewriteBufferSupported,
+			IsCompositeImageAllowed = isCompositeImageAllowed,
+		};
+
+		return LayerMerger
+			.Create(options)
+			.Merge(data);
+	}
+
+	/// <summary>
+	/// Appens all extra characters needed for rendering the given merged layers.
+	/// </summary>
+	private void AppendExtraCharsFromLayers(LevelData mergedLayers)
+	{
+		foreach (var layer in mergedLayers.Layers)
+		{
+			Logger.Verbose.Separator();
+
+			// We only need 1 fully transparent character. If we don't yet have it from base chars, this is where we'll add it. We could call this function outside the loop, but this way we get more meaningful log.
+			AppendTransparentChar();
+
+			Logger.Debug.Message($"Adding characters from {Path.GetFileName(layer.Name)}");
+
+			// For extra characters we ignore all transparent ones. These "auto-added" characters are only added if they are opaque and unique. No fully transparent or duplicates allowed. This works the same regardless of whether base chars image was used or not.
+			var result = new ImageSplitter
+			{
+				ItemWidth = Data.GlobalOptions.CharInfo.Width,
+				ItemHeight = Data.GlobalOptions.CharInfo.Height,
+				TransparencyOptions = TransparencyOptionsType.OpaqueOnly,
+				DuplicatesOptions = DuplicatesOptionsType.UniqueOnly
+			}
+			.Split(layer.Image, Data.CharsContainer);
+
+			// Assign indexed image to layer.
+			layer.IndexedImage = result.IndexedImage;
+
+			Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} unique characters");
+		}
+
+		Logger.Verbose.Separator();
+		Logger.Debug.Message($"{Data.CharsContainer.Images.Count} characters found");
+	}
+
+	/// <summary>
 	/// Merges all different colours from all layers into a single "global" palette to make it ready for exporting.
 	/// </summary>
-	private void PrepareExportPalette(bool isCompositeImage)
+	private void PrepareExportPalette()
 	{
 		Logger.Debug.Separator();
 
@@ -228,41 +198,43 @@ public class ScreensRunner : BaseRunner
 		{
 			var options = new PaletteMerger.OptionsType
 			{
-				Is4Bit = Data.ScreenOptions.CharColour == ScreenOptionsType.CharColourType.NCM,
-				IsCompositeImage = isCompositeImage,
-				IsUsingTransparency = true,
 				Images = Data.CharsContainer.Images,
+				Is4Bit = Data.GlobalOptions.ColourMode == CharColourMode.NCM,
+				IsUsingTransparency = true,
 			};
 
 			// Note: merging not only prepares the final palette for export, but also remaps all character images colours to point to this generated palette.
-			Data.ExportData.Palette = PaletteMerger
+			Data.Palette = PaletteMerger
 				.Create(options)
 				.Merge();
+
+			// We should already validate the data while merging, but just in case do validate the final result again.
+			Data.ValidateData();
 		});
 	}
 
 	/// <summary>
 	/// Converts layers data into format suitable for exporting.
 	/// </summary>
-	private void PrepareExportData()
+	private void PrepareExportData(LevelData mergedLayers, ScreenData destination)
 	{
 		Logger.Debug.Separator();
 
 		new TimeRunner
 		{
-			Title = "Preparing layers data"
+			Title = "Preparing screen and colour data"
 		}
 		.Run(() =>
 		{
-			var screen = new LayersData.Layer();
-			var colour = new LayersData.Layer();
+			var screen = new ScreenData.Layer();
+			var colour = new ScreenData.Layer();
 
 			string? layerName = null;
-			LayersData.Column.DataType dataType;
+			ScreenData.Column.DataType dataType;
 
-			void AddScreenBytes(LayersData.Row row, int index, ImageData data)
+			void AddScreenBytes(ScreenData.Row row, int index, ImageData data)
 			{
-				var charAddress = Data.ScreenOptions.CharIndexInRam(index);
+				var charAddress = Data.CharIndexInRam(index);
 
 				// Char index is always the same regardless of mode.
 				byte byte1 = (byte)(charAddress & 0xff);
@@ -279,20 +251,20 @@ public class ScreensRunner : BaseRunner
 				column.Data2 = charAddress;
 			}
 
-			void AddColourBytes(LayersData.Row row, int index, ImageData data)
+			void AddColourBytes(ScreenData.Row row, int index, ImageData data)
 			{
-				LayersData.Column column = null!;
+				ScreenData.Column column = null!;
 
-				switch (Data.ScreenOptions.CharColour)
+				switch (Data.GlobalOptions.ColourMode)
 				{
-					case ScreenOptionsType.CharColourType.FCM:
+					case CharColourMode.FCM:
 					{
 						// For FCM colours are not important (until we implement char flipping for example), we always use 0.
 						column = row.AddColumn(0x00, 0x00);
 						break;
 					}
 
-					case ScreenOptionsType.CharColourType.NCM:
+					case CharColourMode.NCM:
 					{
 						// For NCM colours RAM is where we set FCM mode for the character as well as palette bank.
 
@@ -335,7 +307,7 @@ public class ScreensRunner : BaseRunner
 				column.Type = dataType;
 			}
 
-			void AddScreenDelimiterBytes(LayersData.Row row)
+			void AddScreenDelimiterBytes(ScreenData.Row row)
 			{
 				// Byte 0 is lower 8 bits of new X position for upcoming layer. We set it to 0 which means "render over the top of left-most character".
 				byte byte1 = 0;
@@ -348,10 +320,10 @@ public class ScreensRunner : BaseRunner
 				byte byte2 = 0b00000000;
 
 				var column = row.AddColumn(byte1, byte2);
-				column.Type = LayersData.Column.DataType.Attribute;
+				column.Type = ScreenData.Column.DataType.Attribute;
 			}
 
-			void AddColourDelimiterBytes(LayersData.Row row)
+			void AddColourDelimiterBytes(ScreenData.Row row)
 			{
 				// Byte 0:
 				//             +-------------- 1 = don't draw transparent pixels
@@ -369,16 +341,16 @@ public class ScreensRunner : BaseRunner
 				byte byte2 = 0x00;
 
 				var column = row.AddColumn(byte1, byte2);
-				column.Type = LayersData.Column.DataType.Attribute;
+				column.Type = ScreenData.Column.DataType.Attribute;
 			}
 
-			for (var i = 0; i < Data.MergedLayers.Layers.Count; i++)
+			for (var i = 0; i < mergedLayers.Layers.Count; i++)
 			{
-				var layer = Data.MergedLayers.Layers[i];
+				var layer = mergedLayers.Layers[i];
 
 				// Setup layer name and data type - the first column we'll add is marked as "first data" for later handling.
 				layerName = layer.Name;
-				dataType = LayersData.Column.DataType.FirstData;
+				dataType = ScreenData.Column.DataType.FirstData;
 
 				// First layer name is assigned to our one-and-only result layer, for both, screen and colour data.
 				if (i == 0)
@@ -388,8 +360,8 @@ public class ScreensRunner : BaseRunner
 				}
 
 				// Adjust width and height of exported layers.
-				if (layer.IndexedImage.Width > Data.ExportData.LayerWidth) Data.ExportData.LayerWidth = layer.IndexedImage.Width;
-				if (layer.IndexedImage.Height > Data.ExportData.LayerHeight) Data.ExportData.LayerHeight = layer.IndexedImage.Height;
+				if (layer.IndexedImage.Width > destination.LayerWidth) destination.LayerWidth = layer.IndexedImage.Width;
+				if (layer.IndexedImage.Height > destination.LayerHeight) destination.LayerHeight = layer.IndexedImage.Height;
 
 				for (var y = 0; y < layer.IndexedImage.Height; y++)
 				{
@@ -418,26 +390,42 @@ public class ScreensRunner : BaseRunner
 						AddColourBytes(colourRow, charIndex, charData);
 
 						// After adding data at (0,0) of each layer, switch to normal data type and reset layer name.
-						dataType = LayersData.Column.DataType.Data;
+						dataType = ScreenData.Column.DataType.Data;
 						layerName = null;
 					}
 				}
 			}
 
 			// Store the data.
-			Data.ExportData.LevelName = Data.MergedLayers.LevelName;
-			Data.ExportData.RootFolder = Data.MergedLayers.RootFolder;
-			Data.ExportData.Screen = screen;
-			Data.ExportData.Colour = colour;
+			destination.LevelName = mergedLayers.LevelName;
+			destination.RootFolder = mergedLayers.RootFolder;
+			destination.Screen = screen;
+			destination.Colour = colour;
 
-			Logger.Debug.Message($"{Data.MergedLayers.Layers.Count} source layers");
-			Logger.Debug.Message($"{Data.ExportData.Screen.Width * Data.ScreenOptions.CharData.PixelDataSize}x{Data.ExportData.Screen.Height} screen & colour data size");
+			Logger.Debug.Message($"{mergedLayers.Layers.Count} source layers");
+			Logger.Debug.Message($"{destination.Screen.Width * Data.GlobalOptions.CharInfo.PixelDataSize}x{destination.Screen.Height} screen & colour data size");
 		});
 	}
 
-	#endregion
+	/// <summary>
+	/// Appends fully transparent character to global chars container.
+	/// 
+	/// If transparent character already exists, no change is performed.
+	/// </summary>
+	private void AppendTransparentChar()
+	{
+		// Add fully transparent character if we don't yet have one. We need to have at least one fully transparent character so that we can properly setup indexed layers that contain transparent characters. If we already have transparent character (either from base characters set, or from previous layers), this will not create additional one.
+		var transparentCharAddResult = Data.CharsContainer.AddTransparentImage(
+			width: Data.GlobalOptions.CharInfo.Width,
+			height: Data.GlobalOptions.CharInfo.Height
+		);
 
-	#region Helpers
+		// Log transparent character addition.
+		if (transparentCharAddResult.WasAdded)
+		{
+			Logger.Verbose.Message("Adding transparent character");
+		}
+	}
 
 	/// <summary>
 	/// Logs important input Data.ScreenOptions and describes what actions will occur.
@@ -448,16 +436,6 @@ public class ScreensRunner : BaseRunner
 	{
 		Logger.Debug.Separator();
 
-		if (Data.ScreenOptions.BaseCharsImage != null)
-		{
-			Logger.Debug.Option($"Base characters will be generated from: {Path.GetFileName(Data.ScreenOptions.BaseCharsImage.GetFilename())}");
-			Logger.Debug.Option("Additional characters will be generated from layer images");
-		}
-		else
-		{
-			Logger.Debug.Option("Characters will be generated from layer images");
-		}
-
 		if (Data.ScreenOptions.IsRasterRewriteBufferSupported)
 		{
 			Logger.Debug.Option("Individual layers will be exported as RRB");
@@ -465,7 +443,7 @@ public class ScreensRunner : BaseRunner
 		else
 		{
 			Logger.Debug.Option("Layers will be merged");
-			if (Data.ScreenOptions.BaseCharsImage != null)
+			if (Data.CharOptions.Inputs?.Length > 0)
 			{
 				Logger.Info.Option("NOTE: merging layers may result in extra characters to be generated on top of base character set. Especially if layers use characters with transparent pixels.");
 			}
@@ -473,29 +451,20 @@ public class ScreensRunner : BaseRunner
 
 		Logger.Debug.Option(string.Join("", new string[]
 		{
-			$"Character type: {Data.ScreenOptions.CharColour} (",
-			$"{Data.ScreenOptions.CharData.Width}x{Data.ScreenOptions.CharData.Height} pixels, ",
-			$"{Data.ScreenOptions.CharData.ColoursPerChar} colours per character)"
+			$"Character mode: {Data.GlobalOptions.ColourMode} (",
+			$"{Data.GlobalOptions.CharInfo.Width}x{Data.GlobalOptions.CharInfo.Height} pixels, ",
+			$"{Data.GlobalOptions.CharInfo.ColoursPerChar} colours per character)"
 		}));
 
-		Logger.Debug.Option($"Character size: {Data.ScreenOptions.CharData.PixelDataSize} bytes");
+		Logger.Debug.Option($"Character size: {Data.GlobalOptions.CharInfo.PixelDataSize} bytes");
 
-		var firstChar = Data.ScreenOptions.CharIndexInRam(0);
+		var firstChar = Data.CharIndexInRam(0);
 		Logger.Debug.Option($"Characters base address: ${Data.ScreenOptions.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");
 
-		if (Data.ScreenOptions.InfoRenderingScale > 0)
+		if (Data.GlobalOptions.InfoImageRenderingScale > 0)
 		{
-			Logger.Debug.Option($"Info image scaled at {Data.ScreenOptions.InfoRenderingScale}x will be generated");
+			Logger.Debug.Option($"Info image scaled at {Data.GlobalOptions.InfoImageRenderingScale}x will be generated");
 		}
-	}
-
-	/// <summary>
-	/// Clears parsed data before each input.
-	/// </summary>
-	private void ClearParsedData()
-	{
-		Data.MergedLayers = new();
-		Data.ExportData = new();
 	}
 
 	#endregion

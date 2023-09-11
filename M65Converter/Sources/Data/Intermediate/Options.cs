@@ -1,5 +1,18 @@
 ﻿namespace M65Converter.Sources.Data.Intermediate;
 
+public enum CharColourMode
+{
+	/// <summary>
+	/// Full colour mode.
+	/// </summary>
+	FCM,
+
+	/// <summary>
+	/// Nibble colour mode
+	/// </summary>
+	NCM
+}
+
 public enum TransparencyOptionsType
 {
 	/// <summary>

@@ -56,8 +56,8 @@ public abstract class BaseRunner
 		new TimeRunner
 		{
 			Title = Title(),
-			Header = " ==============================================================================\r\n// ",
-			Footer = "\r\n\\\\ {Time} [{Title}]\r\n =============================================================================="
+			Header = TimeRunner.DoubleLineHeader,
+			Footer = TimeRunner.DoubleLineFooter
 		}
 		.Run(() =>
 		{

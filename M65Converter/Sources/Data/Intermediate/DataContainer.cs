@@ -1,5 +1,6 @@
 ﻿using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Data.Providers;
+using M65Converter.Sources.Exporting;
 using M65Converter.Sources.Exporting.Images;
 using M65Converter.Sources.Exporting.Utils;
 using M65Converter.Sources.Helpers.Inputs;
@@ -15,9 +16,19 @@ namespace M65Converter.Sources.Data.Intermediate;
 public class DataContainer
 {
 	/// <summary>
+	/// Global options.
+	/// </summary>
+	public GlobalOptions GlobalOptions { get; set; } = null!;
+
+	/// <summary>
+	/// All options for generating characters data.
+	/// </summary>
+	public CharOptions CharOptions { get; set; } = null!;
+
+	/// <summary>
 	/// All options for generating screens and colours data.
 	/// </summary>
-	public ScreenOptionsType ScreenOptions { get; set; } = null!;
+	public ScreenOptions ScreenOptions { get; set; } = null!;
 
 	/// <summary>
 	/// All the parsed characters.
@@ -25,34 +36,72 @@ public class DataContainer
 	public ImagesContainer CharsContainer { get; } = new();
 
 	/// <summary>
-	/// All parsed layers containing source data for screen and colours data.
+	/// All colours needed for all characters.
 	/// </summary>
-	public LevelData MergedLayers { get; set; } = new();
+	public List<ColourData> Palette { get; set; } = new();
 
 	/// <summary>
 	/// Screen and colour data in a form suitable for exporting.
 	/// </summary>
-	public LayersData ExportData { get; set; } = new();
+	public List<ScreenData> Screens { get; } = new();
 
-	// TODO: we need to have generated data for each input separately. Probably don't need merged layers - that's just intermediate data for screens and colours, but we do need export data to be an array of layers
+	/// <summary>
+	/// Contains all stream providers used for output.
+	/// 
+	/// Only valid after <see cref="ExportData"/> completes. This is mainly used for unit testing reasons.
+	/// </summary>
+	public OutputStreams UsedOutputStreams { get; private set; } = new();
 
-	#region Validation
+	#region Subclass
+
+	/// <summary>
+	/// Prepares the output stream for the given screen using the given template.
+	/// 
+	/// A subclass that wants to change how all output streams are prepared can override this and customize as needed. Default implementation prepares file stream from the template returned from template picker.
+	/// </summary>
+	protected virtual IStreamProvider? OutputStreamProvider(ScreenData data, Func<FileInfo?> templatePicker)
+	{
+		// If template is not provided, user doesn't want to export this data.
+		var template = templatePicker();
+		if (template == null) return null;
+
+		var path = PathFromTemplate(template.FullName, data);
+
+		return new FileStreamProvider
+		{
+			FileInfo = new FileInfo(path)
+		};
+	}
+
+	/// <summary>
+	/// Converts the given template path into the actual one.
+	/// 
+	/// A subclass that only needs to change how templates are converted into proper paths, can override this and customize the path.
+	/// </summary>
+	protected virtual string PathFromTemplate(string template, ScreenData screen)
+	{
+		return template.Replace("{level}", screen.LevelName);
+	}
+
+	#endregion
+
+	#region Validating
 
 	/// <summary>
 	/// Validates input data to make sure we can export it.
 	/// 
 	/// Note: this doesn't take care of all possible issues. It only checks for common issues.
 	/// </summary>
-	public void ValidateParsedData()
+	public void ValidateData()
 	{
 		if (CharsContainer.Images.Count > 8192)
 		{
-			throw new ArgumentException("Too many characters to fit 2 bytes, adjust source files");
+			throw new InvalidDataException("Too many characters to fit 2 bytes, adjust source files");
 		}
 
-		if (ExportData.Palette.Count > 256)
+		if (Palette.Count > 256)
 		{
-			throw new ArgumentException("Too many colours in palette, adjust source files");
+			throw new InvalidDataException("Too many colours in the palette, adjust source files");
 		}
 	}
 
@@ -63,309 +112,195 @@ public class DataContainer
 	/// <summary>
 	/// Exports all generated data.
 	/// </summary>
-	public void ExportGeneratedData()
+	public void ExportData()
 	{
-		// Note: the order of exports is not important from generated data perspective, but the given order results in nicely grouped log data, especially when verbose logging is enabled. This way it's simpler to compare related data as it's printed close together.
-		ExportColours();
-		ExportScreens();
-		ExportChars();
-		ExportPalette();
-		ExportLayerInfos();
-		ExportInfoImages();
-	}
+		Logger.Debug.Separator();
 
-	private void ExportColours()
-	{
-		foreach (var io in ScreenOptions.InputsOutputs)
+		new TimeRunner
 		{
-			CreateExporter("colour ram", io.OutputColourStream).Export(writer =>
-			{
-				Logger.Verbose.Message("Format:");
-				Logger.Verbose.Option($"Each colour is {ScreenOptions.CharData.PixelDataSize} bytes");
-				Logger.Verbose.Option("Top-to-down, left-to-right order");
-
-				var formatter = Logger.Verbose.IsEnabled
-					? new TableFormatter
-					{
-						IsHex = true,
-						MinValueLength = 4,
-					}
-					: null;
-
-				for (var y = 0; y < ExportData.Colour.Rows.Count; y++)
-				{
-					var row = ExportData.Colour.Rows[y];
-
-					formatter?.StartNewRow();
-
-					for (var x = 0; x < row.Columns.Count; x++)
-					{
-						var column = row.Columns[x];
-
-						formatter?.AppendData(column.LittleEndianData);
-
-						foreach (var data in column.Values)
-						{
-							writer.Write(data);
-						}
-					}
-				}
-
-				Logger.Verbose.Separator();
-				Logger.Verbose.Message($"Exported colours (little endian hex values):");
-				formatter?.Log(Logger.Verbose.Option);
-			});
+			Title = "Exporting",
+			Header = TimeRunner.DoubleLineHeader,
+			Footer = TimeRunner.DoubleLineFooter
 		}
-	}
-
-	private void ExportScreens()
-	{
-		foreach (var io in ScreenOptions.InputsOutputs)
+		.Run(() =>
 		{
-			CreateExporter("screen data", io.OutputScreenStream).Export(writer =>
+			// Note: exporting is implemented in this class to have single method for exporting all data. This is also a simple way of keeping the knowledge to which data should be exported and which output stream to use and keep exporter classes focused on single job of exporting the data
+			ExportChars();
+			ExportPalette();
+
+			foreach (var data in Screens)
 			{
-				Logger.Verbose.Message("Format:");
-				Logger.Verbose.Option($"Expected to be copied to memory address ${ScreenOptions.CharsBaseAddress:X}");
-				Logger.Verbose.Option($"Char start index {ScreenOptions.CharIndexInRam(0)} (${ScreenOptions.CharIndexInRam(0):X})");
-				Logger.Verbose.Option("All pixels as char indices");
-				Logger.Verbose.Option($"Each pixel is {ScreenOptions.CharData.PixelDataSize} bytes");
-				Logger.Verbose.Option("Top-to-down, left-to-right order");
+				ExportScreenColour(data);
+				ExportScreenData(data);
+				ExportLookupTable(data);
+				ExportInfoImage(data);
+			}
 
-				var formatter = Logger.Verbose.IsEnabled
-					? new TableFormatter
-					{
-						IsHex = true,
-					}
-					: null;
-
-				for (var y = 0; y < ExportData.Screen.Rows.Count; y++)
-				{
-					var row = ExportData.Screen.Rows[y];
-
-					formatter?.StartNewRow();
-
-					for (var x = 0; x < row.Columns.Count; x++)
-					{
-						var column = row.Columns[x];
-
-						// We log as big endian to potentially preserve 1-2 chars in the output. See comment in `TableFormatter.FormattedData()` method for more details.
-						formatter?.AppendData(column.BigEndianData);
-
-						foreach (var data in column.Values)
-						{
-							writer.Write(data);
-						}
-					}
-				}
-
-				Logger.Verbose.Separator();
-				Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${ScreenOptions.CharsBaseAddress:X}):");
-				formatter?.Log(Logger.Verbose.Option);
-			});
-		}
+			// As the last output we print potential export issues. We want them as prominent as possible hence at the end of likely quite long output.
+			PrintPotentialExportIssues();
+		});
 	}
 
 	private void ExportChars()
 	{
-		// TODO: we should move characters outside the array of I/Os since they are shared by all
-		if (ScreenOptions.InputsOutputs.Length == 0) return;
+		UsedOutputStreams.CharsStream = CharOptions.OutputCharsStream;
+		
+		if (CharOptions.OutputCharsStream == null) return;
 
-		CreateExporter("chars", ScreenOptions.InputsOutputs[0].OutputCharsStream).Export(writer =>
+		CreateExporter("chars", CharOptions.OutputCharsStream).Export(writer =>
 		{
-			Logger.Verbose.Message("Format:");
-			Logger.Verbose.Option($"{CharsContainer.Images.Count} characters");
-			switch (ScreenOptions.CharColour)
+			new CharsExporter
 			{
-				case ScreenOptionsType.CharColourType.NCM:
-					Logger.Verbose.Option("Each character is 16x8 pixels");
-					Logger.Verbose.Option("Each pixel is 4 bits, 2 successive pixels form 1 byte");
-					break;
-				case ScreenOptionsType.CharColourType.FCM:
-					Logger.Verbose.Option("Each character is 8x8 pixels");
-					Logger.Verbose.Option("Each pixel is 8 bits / 1 byte");
-					break;
+				Data = this,
+				Chars = CharsContainer
 			}
-			Logger.Verbose.Option("All pixels as palette indices");
-			Logger.Verbose.Option("Top-to-down, left-to-right order");
-			Logger.Verbose.Option($"Character size is {ScreenOptions.CharData.CharDataSize} bytes");
-
-			var charData = Logger.Verbose.IsEnabled ? new List<byte>() : null;
-			var formatter = Logger.Verbose.IsEnabled
-				? new TableFormatter
-				{
-					IsHex = true,
-					Headers = new[] { "Address", "Index", $"Data ({ScreenOptions.CharData.CharDataSize} bytes)" },
-					Prefix = " $",
-					Suffix = " "
-				}
-				: null;
-
-			var charIndex = -1;
-			foreach (var character in CharsContainer.Images)
-			{
-				charIndex++;
-
-				var startingFilePosition = (int)writer.BaseStream.Position;
-
-				charData?.Clear();
-				formatter?.StartNewRow();
-
-				for (var y = 0; y < character.IndexedImage.Height; y++)
-				{
-					switch (ScreenOptions.CharColour)
-					{
-						case ScreenOptionsType.CharColourType.NCM:
-							for (var x = 0; x < character.IndexedImage.Width; x += 2)
-							{
-								var colour1 = character.IndexedImage[x, y];
-								var colour2 = character.IndexedImage[x + 1, y];
-								var colour = (byte)(((colour1 & 0x0f) << 4) | (colour2 & 0x0f));
-								var swapped = colour.SwapNibble();
-								charData?.Add(swapped);
-								writer.Write(swapped);
-							}
-							break;
-
-						case ScreenOptionsType.CharColourType.FCM:
-							for (var x = 0; x < character.IndexedImage.Width; x++)
-							{
-								var colour = (byte)(character.IndexedImage[x, y] & 0xff);
-								charData?.Add(colour);
-								writer.Write(colour);
-							}
-							break;
-					}
-				}
-
-				formatter?.AppendData(ScreenOptions.CharsBaseAddress + startingFilePosition);
-				formatter?.AppendData(ScreenOptions.CharIndexInRam(charIndex));
-				if (charData != null)
-				{
-					var dataArray = charData.ToArray();
-					var first8 = string.Join("", dataArray[0..7].Select(x => x.ToString("X2")));
-					var last8 = string.Join("", dataArray[^8..].Select(x => x.ToString("X2")));
-					formatter?.AppendString($"{first8}...{last8}");
-				}
-			}
-
-			Logger.Verbose.Separator();
-			formatter?.Log(Logger.Verbose.Option);
+			.Export(writer);
 		});
 	}
 
 	private void ExportPalette()
 	{
-		// TODO: we should move palette stream out of I/Os since it's shared between all
-		if (ScreenOptions.InputsOutputs.Length == 0) return;
+		UsedOutputStreams.PaletteStreram = CharOptions.OutputPaletteStream;
 
-		CreateExporter("palette", ScreenOptions.InputsOutputs[0].OutputPaletteStream).Export(writer =>
+		if (CharOptions.OutputPaletteStream == null) return;
+
+		CreateExporter("palette", CharOptions.OutputPaletteStream).Export(writer =>
 		{
-			new PaletteExporter().Export(
-				palette: ExportData.Palette.Select(x => x.Colour).ToList(),
-				writer: writer
-			);
+			new PaletteExporter
+			{
+				Data = this,
+				Palette = Palette.Select(x => x.Colour).ToList(),
+			}
+			.Export(writer);
 		});
 	}
 
-	private void ExportLayerInfos()
+	private void ExportScreenColour(ScreenData data)
 	{
-		foreach (var io in ScreenOptions.InputsOutputs)
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputColourTemplate);
+		if (streamProvider == null) return;
+
+		UsedOutputStreams.ColourDataStreams.Add(streamProvider);
+
+		CreateExporter("colour ram", streamProvider).Export(writer =>
 		{
-			CreateExporter("layer info", io.OutputInfoDataStream).Export(writer =>
+			new ScreenColoursExporter
 			{
-				var charSize = ScreenOptions.CharData.PixelDataSize;
-
-				var layerWidth = ExportData.Screen.Width;
-				var layerHeight = ExportData.Screen.Height;
-				var layerSizeChars = layerWidth * layerHeight;
-				var layerSizeBytes = layerSizeChars * charSize;
-				var layerRowSize = layerWidth * charSize;
-
-				var screenColumns = new[] { 40, 80 };
-				var screenCharColumns = new[]
-				{
-				ScreenOptions.CharData.CharsPerScreenWidth40Columns,
-				ScreenOptions.CharData.CharsPerScreenWidth80Columns,
-				};
-
-				Logger.Verbose.Separator();
-				Logger.Verbose.Message("Format (hex values in little endian):");
-
-				// Character info.
-				var formatter = Logger.Verbose.IsEnabled ? TableFormatter.CreateFileFormatter() : null;
-
-				writer.Write((byte)charSize);
-				formatter?.AddFileFormat(size: 1, value: charSize, description: "Character size in bytes");
-
-				writer.Write((byte)0xff);
-				formatter?.AddFileFormat(size: 1, value: 0xff, description: "Unused");
-
-				// Layer info.
-				formatter?.AddFileSeparator();
-
-				writer.Write((ushort)layerWidth);
-				formatter?.AddFileFormat(size: 2, value: layerWidth, description: "Layer width in characters");
-
-				writer.Write((ushort)layerHeight);
-				formatter?.AddFileFormat(size: 2, value: layerHeight, description: "Layer height in characters");
-
-				writer.Write((ushort)layerRowSize);
-				formatter?.AddFileFormat(size: 2, value: layerRowSize, description: "Layer row size in bytes (logical row size)");
-
-				writer.Write((uint)layerSizeChars);
-				formatter?.AddFileFormat(size: 4, value: layerSizeChars, description: "Layer size in characters (width * height)");
-
-				writer.Write((uint)layerSizeBytes);
-				formatter?.AddFileFormat(size: 4, value: layerSizeBytes, description: "Layer size in bytes (width * height * char size)");
-
-				// Screen info.
-				for (var i = 0; i < screenColumns.Length; i++)
-				{
-					var columns = screenColumns[i];
-					var width = screenCharColumns[i];
-					var height = ScreenOptions.CharData.CharsPerScreenHeight;  // height is always the same
-
-					formatter?.AddFileSeparator();
-
-					writer.Write((byte)width);
-					formatter?.AddFileFormat(size: 1, value: width, description: $"Characters per {columns} column screen width");
-
-					writer.Write((byte)height);
-					formatter?.AddFileFormat(size: 1, value: height, description: "Characters per screen height");
-
-					writer.Write((ushort)(width * charSize));
-					formatter?.AddFileFormat(size: 2, value: width * charSize, description: "Screen row size in bytes");
-
-					writer.Write((ushort)(width * height));
-					formatter?.AddFileFormat(size: 2, value: width * height, description: "Screen size in characters");
-
-					writer.Write((ushort)(width * height * charSize));
-					formatter?.AddFileFormat(size: 2, value: width * height * charSize, description: "Screen size in bytes");
-				}
-
-				formatter?.Log(Logger.Verbose.Option);
-			});
-		}
+				Data = this,
+				Screen = data
+			}
+			.Export(writer);
+		});
 	}
 
-	private void ExportInfoImages()
+	private void ExportScreenData(ScreenData data)
 	{
-		if (ScreenOptions.InfoRenderingScale <= 0) return;
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputScreenTemplate);
+		if (streamProvider == null) return;
 
-		foreach (var io in ScreenOptions.InputsOutputs)
+		UsedOutputStreams.ScreenDataStreams.Add(streamProvider);
+
+		CreateExporter("screen data", streamProvider).Export(writer =>
 		{
-			CreateExporter("info image", io.OutputInfoImageStream).Prepare(stream =>
+			new ScreenDataExporter
 			{
-				new CharsImageExporter
-				{
-					Scale = ScreenOptions.InfoRenderingScale,
-					LayersData = ExportData,
-					CharsContainer = CharsContainer,
-					CharInfo = ScreenOptions.CharData,
-					CharsBaseAddress = ScreenOptions.CharsBaseAddress
-				}
-				.Draw(stream);
-			});
+				Data = this,
+				Screen = data
+			}
+			.Export(writer);
+		});
+	}
+
+	private void ExportLookupTable(ScreenData data)
+	{
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputLookupTemplate);
+		if (streamProvider == null) return;
+
+		UsedOutputStreams.LookupDataStreams.Add(streamProvider);
+
+		CreateExporter("layer info", streamProvider).Export(writer =>
+		{
+			new ScreenLookupExporter
+			{
+				Data = this,
+				Screen = data
+			}
+			.Export(writer);
+		});
+	}
+
+	private void ExportInfoImage(ScreenData data)
+	{
+		if (GlobalOptions.InfoImageRenderingScale <= 0) return;
+
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputInfoTemplate);
+		if (streamProvider == null) return;
+
+		UsedOutputStreams.InfoImageStreams.Add(streamProvider);
+
+		CreateExporter("info image", streamProvider).Prepare(stream =>
+		{
+			new ScreenInfoImageExporter
+			{
+				Data = this,
+				Screen = data
+			}
+			.Export(stream);
+		});
+	}
+
+	private void PrintPotentialExportIssues()
+	{
+		var isCharsOut = CharOptions.OutputCharsStream != null;
+		var isPaletteOut = CharOptions.OutputPaletteStream != null;
+
+		var isScreenOut = ScreenOptions.OutputScreenTemplate != null;
+		var isColourOut = ScreenOptions.OutputColourTemplate != null;
+		var isLookupOut = ScreenOptions.OutputLookupTemplate != null;
+		var isAnyLevelOut = isScreenOut || isColourOut || isLookupOut;
+
+		var isHeaderPrinted = false;
+
+		void Exclaim(string message)
+		{
+			if (!isHeaderPrinted)
+			{
+				Logger.Info.Separator();
+				Logger.Info.Exclamation("IMPORTANT:");
+				isHeaderPrinted = true;
+			}
+
+			Logger.Info.Exclamation(message);
+		}
+
+		if (!isCharsOut && isPaletteOut)
+		{
+			Exclaim("--out-palette used but --out-chars not. This may result in invalid char colours!");
+		}
+
+		if (isCharsOut && !isPaletteOut)
+		{
+			Exclaim("--out-chars used but --out-palette not. This may result in invalid char colours!");
+		}
+
+		if (!isCharsOut && isAnyLevelOut)
+		{
+			Exclaim("--out-chars not used but at least one of screen data is (--out-screen, --out-colour, --out-lookup). This may result in invalid characters displayed");
+		}
+
+		if (isScreenOut && !isColourOut)
+		{
+			Exclaim("--out-screen used but --out-colour not. This may result in garbled screen display.");
+		}
+
+		if (!isScreenOut && isColourOut)
+		{
+			Exclaim("--out-colour used but --out-screen not. This may result in garbled screen display.");
+		}
+
+		if (!isScreenOut && !isColourOut && isLookupOut)
+		{
+			Exclaim("--out-screen and --out-colour not used but --out-lookup is. This may result in invalid addresses from lookup tables being used.");
 		}
 	}
 
@@ -376,6 +311,29 @@ public class DataContainer
 			LogDescription = description,
 			Stream = provider
 		};
+	}
+
+	#endregion
+
+	#region Helpers
+
+	/// <summary>
+	/// Takes "relative" character index (0 = first generated character) and converts it to absolute character index as needed for Mega 65 hardware, taking into condideration char base address.
+	/// </summary>
+	public int CharIndexInRam(int relativeIndex) => GlobalOptions.CharInfo.CharIndexInRam(ScreenOptions.CharsBaseAddress, relativeIndex);
+
+	#endregion
+
+	#region Declarations
+
+	public class OutputStreams
+	{
+		public IStreamProvider? CharsStream { get; set; }
+		public IStreamProvider? PaletteStreram { get; set; }
+		public List<IStreamProvider> ScreenDataStreams { get; } = new();
+		public List<IStreamProvider> ColourDataStreams { get; } = new();
+		public List<IStreamProvider> LookupDataStreams { get; } = new();
+		public List<IStreamProvider> InfoImageStreams { get; } = new();
 	}
 
 	#endregion

@@ -1,9 +1,11 @@
-﻿namespace M65Converter.Sources.Data.Models;
+﻿using M65Converter.Sources.Data.Models;
+
+namespace M65Converter.Sources.Data.Intermediate;
 
 /// <summary>
-/// Contains all post-processed information about layers, ready for exporting or rendering.
+/// Contains all post-processed information about a screen, ready for exporting or rendering.
 /// </summary>
-public class LayersData
+public class ScreenData
 {
 	/// <summary>
 	/// The width of the longest layer.
@@ -36,7 +38,7 @@ public class LayersData
 	public Layer Colour { get; set; } = new();
 
 	/// <summary>
-	/// All colours.
+	/// All colours for this screen.
 	/// </summary>
 	public List<ColourData> Palette { get; set; } = new();
 

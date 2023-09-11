@@ -8,24 +8,28 @@ namespace UnitTests.Chars;
 public class ColourExportTests
 {
 	[Theory]
-	[InlineData(ScreenOptionsType.CharColourType.FCM, false)]
-	[InlineData(ScreenOptionsType.CharColourType.FCM, true)]
-	[InlineData(ScreenOptionsType.CharColourType.NCM, false)]
-	[InlineData(ScreenOptionsType.CharColourType.NCM, true)]
-	public void Colour_ShouldExportColour(ScreenOptionsType.CharColourType chars, bool rrb)
+	[InlineData(CharColourMode.FCM, false)]
+	[InlineData(CharColourMode.FCM, true)]
+	[InlineData(CharColourMode.NCM, false)]
+	[InlineData(CharColourMode.NCM, true)]
+	public void Colour_ShouldExportColour(CharColourMode chars, bool rrb)
 	{
 		// setup
-		var data = new DataContainer();
+		var data = new DataContainerCreator
+		{
+			CharType = chars,
+			IsRRBEnabled = rrb,
+		};
 		var runner = new ScreensRunnerCreator
 		{
-			Data = data,
+			Data = data.Get(),
 			CharType = chars,
 			IsRRBEnabled = rrb
 		};
 
 		// execute
 		runner.Get().Run();
-		data.ExportGeneratedData();
+		data.Get().ExportData();
 
 		// verify
 		var expectedDataCreator = new ResourcesCreator.ColourCreator
@@ -34,7 +38,7 @@ public class ColourExportTests
 			IsRRBEnabled = rrb
 		};
 		var expectedData = expectedDataCreator.Get();
-		var actualData = data.ScreenOptions.InputsOutputs[0].OutputColourStream;
+		var actualData = data.Get().UsedOutputStreams.ColourDataStreams[0];
 		Assert.Equal(expectedData, actualData);
 	}
 }

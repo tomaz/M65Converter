@@ -161,34 +161,22 @@ InitScreen:
 
 	Palette:
 		* = * "Data - Palette"
-		#if LEVEL2
-			.import binary "../build/assets/level2/chars.pal"
-		#elif LEVEL1
-			.import binary "../build/assets/level1/chars.pal"
-		#else 
-			.import binary "../build/assets/level/chars.pal"
-		#endif
+		.import binary "../build/assets/chars.pal"
 	__Palette:
 
 	Characters:
 		* = * "Data - Chars"
-		#if LEVEL2
-			.import binary "../build/assets/level2/chars.bin"
-		#elif LEVEL1
-			.import binary "../build/assets/level1/chars.bin"
-		#else 
-			.import binary "../build/assets/level/chars.bin"
-		#endif
+		.import binary "../build/assets/chars.bin"
 	__Characters:
 
 	Layer:
 		* = * "Data - Layer"
 		#if LEVEL2
-			.import binary "../build/assets/level2/layer.bin"
+			.import binary "../build/assets/level2/screen.bin"
 		#elif LEVEL1
-			.import binary "../build/assets/level1/layer.bin"
+			.import binary "../build/assets/level1/screen.bin"
 		#else
-			.import binary "../build/assets/level/layer.bin"
+			.import binary "../build/assets/level/screen.bin"
 		#endif
 	__Layer:
 
@@ -214,11 +202,11 @@ InitScreen:
 		.label ScreenSize = * + 22
 
 		#if LEVEL2
-			.import binary "../build/assets/level2/layer.inf"
+			.import binary "../build/assets/level2/lookup.inf"
 		#elif LEVEL1
-			.import binary "../build/assets/level1/layer.inf"
+			.import binary "../build/assets/level1/lookup.inf"
 		#else
-			.import binary "../build/assets/level/layer.inf"
+			.import binary "../build/assets/level/lookup.inf"
 		#endif
 	}
 }

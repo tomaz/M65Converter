@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using M65Converter.Runners;
 using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Utils;
+using M65Converter.Sources.Data.Providers;
 
 namespace M65Converter.Sources.Helpers.Inputs;
 
@@ -23,6 +23,17 @@ namespace M65Converter.Sources.Helpers.Inputs;
 /// </summary>
 public abstract class BaseOptionsBinder<T> : BinderBase<T>
 {
+	private bool isGlobal = false;
+
+	#region Initialization & Disposal
+
+	protected BaseOptionsBinder(bool global = false)
+	{
+		isGlobal = global;
+	}
+
+	#endregion
+
 	#region Subclass
 
 	protected abstract Command OnCreateCommand();
@@ -31,7 +42,7 @@ public abstract class BaseOptionsBinder<T> : BinderBase<T>
 
 	#endregion
 
-	#region Helpers
+	#region Commands
 
 	public Command CreateCommand(DataContainer data)
 	{
@@ -44,7 +55,14 @@ public abstract class BaseOptionsBinder<T> : BinderBase<T>
 
 			if (value is Option option)
 			{
-				result.Add(option);
+				if (isGlobal)
+				{
+					result.AddGlobalOption(option);
+				}
+				else
+				{
+					result.Add(option);
+				}
 			}
 
 			if (value is Argument argument)
@@ -53,14 +71,20 @@ public abstract class BaseOptionsBinder<T> : BinderBase<T>
 			}
 		}
 
-		// Setup handler. Note how we embed runner inside try/catch to log any runtime errors.
-		result.SetHandler((verbosity, options) =>
+		// Setup handler.
+		// Note how we embed runner inside try/catch to log any runtime errors.
+		// Note how we need to manage global options manually.
+		result.SetHandler((globals, options) =>
 		{
 			try
 			{
-				Logger.Verbosity = verbosity;
+				// Assign global options.
+				data.GlobalOptions = globals;
 
+				// Notify subclass about its options.
 				OnAssignOptions(options, data);
+
+				// Ask subclass to create a runner and invoke it.
 				OnCreateRunner(options, data).Run();
 			}
 			catch (Exception e)
@@ -69,22 +93,37 @@ public abstract class BaseOptionsBinder<T> : BinderBase<T>
 			}
 
 		},
-		GlobalOptions.VerbosityOption,
+		GlobalOptionsBinder.Instance,
 		this);
 
 		return result;
 	}
 
 	#endregion
-}
 
-public static class GlobalOptions
-{
-	public static Option<Logger.VerbosityType> VerbosityOption = new(
-		aliases: new[] { "-v", "--verbosity" },
-		description: "Verbosity level",
-		getDefaultValue: () => Logger.Verbosity
-	);
+	#region Helpers
+
+	/// <summary>
+	/// Converts the given file info to stream provider.
+	/// </summary>
+	protected IStreamProvider? Provider(FileInfo? info)
+	{
+		return info != null
+			? new FileStreamProvider { FileInfo = info }
+			: null;
+	}
+
+	/// <summary>
+	/// Converts the given array of file infos to array of stream providers.
+	/// </summary>
+	protected IStreamProvider[]? Providers(FileInfo[]? infos)
+	{
+		return (infos?.Length ?? 0) > 0
+			? infos!.Select(x => Provider(x)!).ToArray()
+			: null;
+	}
+
+	#endregion
 }
 
 public static class OptionsExtensions
@@ -97,5 +136,13 @@ public static class OptionsExtensions
 		if (value.StartsWith("0x")) return ParseHex(value[2..]);
 
 		return int.Parse(value);
+	}
+
+	public static Size ParseAsSize(this string value, int defaultHeight = 0)
+	{
+		var components = value.Split('x');
+		var width = ParseAsInt(components[0].Trim());
+		var height = components.Length >= 2 ? ParseAsInt(components[1].Trim()) : defaultHeight;
+		return new Size(width, height);
 	}
 }

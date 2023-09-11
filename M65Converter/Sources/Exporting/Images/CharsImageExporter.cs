@@ -1,5 +1,4 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Data.Models;
 using M65Converter.Sources.Helpers.Images;
 using M65Converter.Sources.Helpers.Utils;
 
@@ -13,24 +12,9 @@ namespace M65Converter.Sources.Exporting.Images;
 public class CharsImageExporter : BaseImageExporter
 {
 	/// <summary>
-	/// The layers data for export.
+	/// The screen data we should export.
 	/// </summary>
-	public LayersData LayersData { get; set; } = null!;
-
-	/// <summary>
-	/// All characters.
-	/// </summary>
-	public ImagesContainer CharsContainer { get; set; } = null!;
-
-	/// <summary>
-	/// Information about characters.
-	/// </summary>
-	public CharInfo CharInfo { get; set; } = null!;
-
-	/// <summary>
-	/// The base address at which characters are stored on Mega 65 hardware. If < 0, this info is not printed.
-	/// </summary>
-	public int CharsBaseAddress { get; set; } = -1;
+	public ScreenData ScreenData { get; init; } = null!;
 
 	private BoxData<CharPositionsType> CharPositions { get; set; } = null!;
 	private BoxData<ColourPositionsType> ColourPositions { get; set; } = null!;
@@ -53,10 +37,10 @@ public class CharsImageExporter : BaseImageExporter
 	{
 		MeasureChars(measures);
 		MeasurePalette(measures);
-		MeasureLayers(measures, LayersData.Screen, ScreenLayerPositions);
+		MeasureLayers(measures, ScreenData.Screen, ScreenLayerPositions);
 		MeasureLayers(
 			measures: measures, 
-			layer: LayersData.Colour, 
+			layer: ScreenData.Colour, 
 			positions: ColourLayerPositions, 
 			isUsingImages: false, 
 			onlyIfFontIsAvailable: true);	// colours are only composed of text, so there's no point in exporting if fonts are not available
@@ -68,8 +52,8 @@ public class CharsImageExporter : BaseImageExporter
 	{
 		DrawPalette(drawings);
 		DrawChars(drawings);
-		DrawLayer(drawings, "SCREEN", LayersData.Screen, ScreenLayerPositions);
-		DrawLayer(drawings, "COLOUR", LayersData.Colour, ColourLayerPositions, isUsingImages: false);
+		DrawLayer(drawings, "SCREEN", ScreenData.Screen, ScreenLayerPositions);
+		DrawLayer(drawings, "COLOUR", ScreenData.Colour, ColourLayerPositions, isUsingImages: false);
 	}
 
 	#endregion
@@ -84,14 +68,14 @@ public class CharsImageExporter : BaseImageExporter
 			builder =>
 			{
 				// Prepare text sizes. Note: if we have 0 characters this will yield invalid values, but the result of the action will still be empty rectangle because builder enumeration will not happen.
-				var lastCharIndex = CharsContainer.Images.Count - 1;
+				var lastCharIndex = Data.CharsContainer.Images.Count - 1;
 				var indexTextSize = measures.FontRenderer.Measure(lastCharIndex.ToMeasureString());
-				var addressTextSize = CharsBaseAddress >= 0
+				var addressTextSize = Data.ScreenOptions.CharsBaseAddress >= 0
 					? measures.FontRenderer.Measure(CharRamAddressString(lastCharIndex))
 					: new Size();
 
 				// Prepare other sizes.
-				var scaledCharSize = measures.Scaled(new Size(CharInfo.Width, CharInfo.Height));
+				var scaledCharSize = measures.Scaled(Data.GlobalOptions.CharInfo.Size);
 				var charBoxSize = new Size(scaledCharSize.Width + 2, scaledCharSize.Height + 2);    // 1px frame around char
 
 				// Prepare image item size.
@@ -194,7 +178,7 @@ public class CharsImageExporter : BaseImageExporter
 
 				// Colour palette is 16x16 max, so we show 16 colours horizontally up to 16 vertically. However if we have less than 10 lines of colours, we instead use 8 colour per line to avoid horizontally too long image.
 				builder.SetupBox(
-					count: LayersData.Palette.Count,
+					count: Data.Palette.Count,
 					width: 16,
 					ifRowsLessThan: 10,
 					thenDesiredWidthShouldBe: 8
@@ -239,7 +223,7 @@ public class CharsImageExporter : BaseImageExporter
 
 	private void MeasureLayers(
 		Measures measures, 
-		LayersData.Layer layer, 
+		ScreenData.Layer layer, 
 		BoxData<LayerPositionsType> positions,
 		bool isUsingImages = true,
 		bool onlyIfFontIsAvailable = false)
@@ -254,14 +238,14 @@ public class CharsImageExporter : BaseImageExporter
 			{
 				var rowSize = layer.Rows.Count > 0 ? layer.Rows[0].Size : 0;
 
-				var scaledCharSize = measures.Scaled(new Size(CharInfo.Width, CharInfo.Height));
+				var scaledCharSize = measures.Scaled(Data.GlobalOptions.CharInfo.Size);
 				var dataSize = measures.SmallFontRenderer.Measure("8888");
 				var leftHeaderSize = measures.SmallFontRenderer.Measure("8888");
 				var topHeaderSize = measures.SmallFontRenderer.Measure("8");	// only height is important
 				var topHeaderMargin = 3;
 
 				// For FCM mode we need some more horizontal separation to have readable hex values. Either way we also want some separation between layers.
-				var horizontalMargin = CharInfo.Width == 8 ? 3 : 1;
+				var horizontalMargin = Data.GlobalOptions.CharInfo.Width == 8 ? 3 : 1;
 				var verticalMargin = measures.FontRenderer.IsEnabled ? 3 : 1;
 
 				var charWidth = Math.Max(scaledCharSize.Width, dataSize.Width);
@@ -289,7 +273,7 @@ public class CharsImageExporter : BaseImageExporter
 
 					// Add some offset after attributes. But also before - for this we have to update the position we got. Note how we need to adjust margin after attribute twice - we need to take into account the offset we're applying to current position.
 					var adjustedPosition = position;
-					if (data.Type == LayersData.Column.DataType.Attribute)
+					if (data.Type == ScreenData.Column.DataType.Attribute)
 					{
 						adjustedPosition.X += layerHorizontaMargin;
 						builder.OffsetBox(layerHorizontaMargin * 2, 0);
@@ -371,9 +355,9 @@ public class CharsImageExporter : BaseImageExporter
 			);
 		}
 
-		for (var i = 0; i < CharsContainer.Images.Count; i++)
+		for (var i = 0; i < Data.CharsContainer.Images.Count; i++)
 		{
-			var image = CharsContainer.Images[i];
+			var image = Data.CharsContainer.Images[i];
 			var positions = CharPositions.Boxes[i];
 
 			// Image index text.
@@ -437,9 +421,9 @@ public class CharsImageExporter : BaseImageExporter
 			);
 		}
 
-		for (var i = 0; i < LayersData.Palette.Count; i++)
+		for (var i = 0; i < Data.Palette.Count; i++)
 		{
-			var colour = LayersData.Palette[i];
+			var colour = Data.Palette[i];
 			var positions = ColourPositions.Boxes[i];
 
 			var argb = colour.Colour;
@@ -489,7 +473,7 @@ public class CharsImageExporter : BaseImageExporter
 	private void DrawLayer(
 		DrawInfo info,
 		string title,
-		LayersData.Layer layer,
+		ScreenData.Layer layer,
 		BoxData<LayerPositionsType> positions,
 		bool isUsingImages = true)
 	{
@@ -527,7 +511,7 @@ public class CharsImageExporter : BaseImageExporter
 			var position = positions.Boxes[i];
 			var charData = position.CharData;
 
-			var charImage = CharsContainer.Images[charData.Data1];
+			var charImage = Data.CharsContainer.Images[charData.Data1];
 
 			// Draw layer name. Don't do it for first layer since we already draw it as title above.
 			if (position.LayerName != null && i > 0)
@@ -550,7 +534,7 @@ public class CharsImageExporter : BaseImageExporter
 					point: position.TopHeaderPos
 				);
 
-				addressOffsetX += CharInfo.PixelDataSize;
+				addressOffsetX += Data.GlobalOptions.CharInfo.PixelDataSize;
 			}
 
 			// Draw left header, only when drawing left layer column.
@@ -567,7 +551,7 @@ public class CharsImageExporter : BaseImageExporter
 			}
 
 			// For screen data we either draw the image or transparent character box. For attributes we leave this part empty as data doesn't represent an image.
-			if (isUsingImages && charData.Type != LayersData.Column.DataType.Attribute)
+			if (isUsingImages && charData.Type != ScreenData.Column.DataType.Attribute)
 			{
 				if (charImage.IsFullyTransparent)
 				{
@@ -602,7 +586,7 @@ public class CharsImageExporter : BaseImageExporter
 
 	private string CharRamAddressString(int index)
 	{
-		return $"${CharInfo.CharIndexInRam(CharsBaseAddress, index):X}";
+		return $"${Data.CharIndexInRam(index):X}";
 	}
 
 	#endregion
@@ -632,7 +616,7 @@ public class CharsImageExporter : BaseImageExporter
 
 	private class LayerPositionsType
 	{
-		public LayersData.Column CharData { get; set; } = null!;
+		public ScreenData.Column CharData { get; set; } = null!;
 		public string? LayerName { get; set; }
 		public int RowSize { get; set; }
 		public Point Coordinate { get; set; }

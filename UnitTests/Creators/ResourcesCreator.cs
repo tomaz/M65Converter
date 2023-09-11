@@ -1,4 +1,4 @@
-﻿using M65Converter.Sources.Helpers.Inputs;
+﻿using M65Converter.Sources.Data.Intermediate;
 
 using UnitTests.Models;
 
@@ -25,7 +25,7 @@ public static class ResourcesCreator
 			{
 				Data = CharType switch
 				{
-					ScreenOptionsType.CharColourType.NCM => 
+					CharColourMode.NCM => 
 						IsRRBEnabled 
 							? Resources.export_ncm_rrb_chars 
 							: Resources.export_ncm_chars,
@@ -49,7 +49,7 @@ public static class ResourcesCreator
 			{
 				Data = CharType switch
 				{
-					ScreenOptionsType.CharColourType.NCM =>
+					CharColourMode.NCM =>
 						IsRRBEnabled
 							? Resources.export_ncm_rrb_palette
 							: Resources.export_ncm_palette,
@@ -73,7 +73,7 @@ public static class ResourcesCreator
 			{
 				Data = CharType switch
 				{
-					ScreenOptionsType.CharColourType.NCM =>
+					CharColourMode.NCM =>
 						IsRRBEnabled
 							? Resources.export_ncm_rrb_screen
 							: Resources.export_ncm_screen,
@@ -97,7 +97,7 @@ public static class ResourcesCreator
 			{
 				Data = CharType switch
 				{
-					ScreenOptionsType.CharColourType.NCM =>
+					CharColourMode.NCM =>
 						IsRRBEnabled
 							? Resources.export_ncm_rrb_colour
 							: Resources.export_ncm_colour,
@@ -115,7 +115,7 @@ public static class ResourcesCreator
 
 	public abstract class BaseCreator
 	{
-		public ScreenOptionsType.CharColourType CharType { get; init; }
+		public CharColourMode CharType { get; init; }
 		public bool IsRRBEnabled { get; init; }
 
 		private MemoryStreamProvider? provider;

@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text;
 
 namespace M65Converter.Sources.Helpers.Utils;
 
@@ -8,17 +7,68 @@ namespace M65Converter.Sources.Helpers.Utils;
 /// </summary>
 public class TimeRunner
 {
+	public static string[] SingleLineHeader = new[]
+	{
+		" ______________________________________________________________________________",
+		"// {Title}"
+	};
+
+	public static string[] SingleLineFooter = new[]
+	{
+		"\\\\_{Time}_{UnderlinedTitle}{EndlingUnderlines}"
+	};
+
+	public static string[] DoubleLineHeader = new[]
+	{
+		" ==============================================================================",
+		"// {Title}"
+	};
+
+	public static string[] DoubleLineFooter = new[]
+	{
+		"",
+		"\\\\ {Time} [{Title}]",
+		" =============================================================================="
+	};
+
+	/// <summary>
+	/// The logger function to use for logging.
+	/// </summary>
 	public Action<string> LoggerFunction { get; init; } = Logger.Debug.Message;
 
-	public string Header { get; init; } = " ______________________________________________________________________________\r\n// ";
+	/// <summary>
+	/// Header to use at the start of the timing. It can contain the following placeholders:
+	/// - `{Title}` will be replaced by the title (if provided)
+	/// </summary>
+	public string[] Header { get; init; } = SingleLineHeader;
+
+	/// <summary>
+	/// Footer to append at the end of the timing. It can contain the following placeholders:
+	/// - {Time} will be replaced by the measured time in ms
+	/// - {Title} will be replaced by the title (if provided)
+	/// - {UnderlinedTitle} will be replaced by the title where all spaces will be replaced by un underline
+	/// - {EndlingUnderlines} will be replaced by underline until header line length is reached.
+	/// </summary>
+	public string[] Footer { get; init; } = SingleLineFooter;
+
+	/// <summary>
+	/// Optional title.
+	/// </summary>
 	public string? Title { get; init; }
-	public string? Footer { get; init; }
 
 	public void Run(Action action)
 	{
 		var watch = Stopwatch.StartNew();
 
-		LoggerFunction(Title != null ? Header + Title : Header);
+		var usedTitle = Title ?? string.Empty;
+
+		var longestHeaderLine = 0;
+		foreach (var line in Header)
+		{
+			var formattedLine = line.Replace("{Title}", usedTitle);
+			if (formattedLine.Length > longestHeaderLine) longestHeaderLine = formattedLine.Length;
+			LoggerFunction(formattedLine);
+		}
 
 		try
 		{
@@ -34,23 +84,25 @@ public class TimeRunner
 			// Successful, or failed, we should log how much time it took.
 			watch.Stop();
 
-			if (Footer != null)
+			foreach (var line in Footer)
 			{
-				var footer = Footer
+				var needsUnderlining = line.Contains("{EndlingUnderlines}");
+
+				var formattedLine = line
 					.Replace("{Time}", $"{watch.ElapsedMilliseconds}ms")
-					.Replace("{Title}", Title != null ? Title : "");
+					.Replace("{Title}", usedTitle)
+					.Replace("{UnderlinedTitle}", usedTitle.Replace(' ', '_'))
+					.Replace("{EndlingUnderlines}", "");
 
-				LoggerFunction(footer);
-			}
-			else
-			{
-				var timeText = new StringBuilder($"\\\\_{watch.ElapsedMilliseconds}ms");
+				if (needsUnderlining)
+				{
+					while (formattedLine.Length < longestHeaderLine)
+					{
+						formattedLine += "_";
+					}
+				}
 
-				if (Title != null) timeText.Append($"_[{Title.Replace(" ", "_")}]");
-
-				while (timeText.Length < 79) timeText.Append("_");
-
-				LoggerFunction(timeText.ToString());
+				LoggerFunction(formattedLine);
 			}
 		}
 	}
