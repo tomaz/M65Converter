@@ -23,12 +23,12 @@ public class CharInfo
 	/// <summary>
 	/// Number of bytes each pixel requires.
 	/// </summary>
-	public int PixelDataSize { get; init; }
+	public int BytesPerWidth { get; init; }
 
 	/// <summary>
 	/// Number of bytes each character (aka all pixels) require.
 	/// </summary>
-	public int CharDataSize { get; init; }
+	public int BytesPerCharData { get; init; }
 
 	/// <summary>
 	/// Number of colours each character can have.
@@ -57,7 +57,7 @@ public class CharInfo
 	/// </summary>
 	public int CharIndexInRam(int baseAddress, int relativeIndex)
 	{
-		return (baseAddress + relativeIndex * CharDataSize) / CharDataSize;
+		return (baseAddress + relativeIndex * BytesPerCharData) / BytesPerCharData;
 	}
 
 	#endregion

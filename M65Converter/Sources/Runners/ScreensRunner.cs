@@ -22,7 +22,7 @@ public class ScreensRunner : BaseRunner
 		base.OnValidate();
 
 		int charsAddress = Data.ScreenOptions.CharsBaseAddress;
-		int charSize = Data.GlobalOptions.CharInfo.CharDataSize;
+		int charSize = Data.GlobalOptions.CharInfo.BytesPerCharData;
 		if ((charsAddress % charSize) != 0)
 		{
 			var prev = (charsAddress / charSize) * charSize;
@@ -403,7 +403,7 @@ public class ScreensRunner : BaseRunner
 			destination.Colour = colour;
 
 			Logger.Debug.Message($"{mergedLayers.Layers.Count} source layers");
-			Logger.Debug.Message($"{destination.Screen.Width * Data.GlobalOptions.CharInfo.PixelDataSize}x{destination.Screen.Height} screen & colour data size");
+			Logger.Debug.Message($"{destination.Screen.Width * Data.GlobalOptions.CharInfo.BytesPerWidth}x{destination.Screen.Height} screen & colour data size");
 		});
 	}
 
@@ -456,7 +456,7 @@ public class ScreensRunner : BaseRunner
 			$"{Data.GlobalOptions.CharInfo.ColoursPerChar} colours per character)"
 		}));
 
-		Logger.Debug.Option($"Character size: {Data.GlobalOptions.CharInfo.PixelDataSize} bytes");
+		Logger.Debug.Option($"Character size: {Data.GlobalOptions.CharInfo.BytesPerWidth} bytes");
 
 		var firstChar = Data.CharIndexInRam(0);
 		Logger.Debug.Option($"Characters base address: ${Data.ScreenOptions.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");

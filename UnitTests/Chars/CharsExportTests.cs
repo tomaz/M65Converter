@@ -22,8 +22,6 @@ public class CharsExportTests
 		var runner = new ScreensRunnerCreator
 		{
 			Data = data.Get(),
-			CharType = chars,
-			IsRRBEnabled = rrb
 		};
 
 		// execute

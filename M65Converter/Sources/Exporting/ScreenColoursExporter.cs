@@ -20,7 +20,7 @@ public class ScreenColoursExporter : BaseExporter
 	public override void Export(BinaryWriter writer)
 	{
 		Logger.Verbose.Message("Format:");
-		Logger.Verbose.Option($"Each value uses {Data.GlobalOptions.CharInfo.PixelDataSize} bytes");
+		Logger.Verbose.Option($"Each value uses {Data.GlobalOptions.CharInfo.BytesPerWidth} bytes");
 		Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 		var formatter = Logger.Verbose.IsEnabled

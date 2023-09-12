@@ -113,6 +113,30 @@ public static class ResourcesCreator
 		}
 	}
 
+	public class LookupCreator : BaseCreator
+	{
+		protected override MemoryStreamProvider CreateStreamProvider()
+		{
+			return new MemoryStreamProvider
+			{
+				Data = CharType switch
+				{
+					CharColourMode.NCM =>
+						IsRRBEnabled
+							? Resources.export_ncm_rrb_lookup
+							: Resources.export_ncm_lookup,
+
+					_ =>
+						IsRRBEnabled
+							? Resources.export_fcm_rrb_lookup
+							: Resources.export_fcm_lookup,
+				},
+
+				Filename = "export-lookup.inf"
+			};
+		}
+	}
+
 	public abstract class BaseCreator
 	{
 		public CharColourMode CharType { get; init; }

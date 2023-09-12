@@ -1,6 +1,4 @@
-﻿using M65Converter.Sources.Helpers.Utils;
-
-using System.CommandLine;
+﻿using System.CommandLine;
 
 namespace M65Converter.Sources.Helpers.Inputs;
 

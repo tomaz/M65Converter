@@ -1,5 +1,4 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Inputs;
 using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Exporting;
@@ -18,20 +17,24 @@ public class ScreenLookupExporter : BaseExporter
 
 	public override void Export(BinaryWriter writer)
 	{
-		var charSize = Data.GlobalOptions.CharInfo.PixelDataSize;
+		var bytesPerCharWidth = Data.GlobalOptions.CharInfo.BytesPerWidth;
+		var bytesPerChar = Data.GlobalOptions.CharInfo.BytesPerCharData;
+		var charWidth = Data.GlobalOptions.CharInfo.Width;
+		var charHeight = Data.GlobalOptions.CharInfo.Height;
+
+		var screenWidth = Data.ScreenOptions.ScreenSize.Width;
+		var screenHeight = Data.ScreenOptions.ScreenSize.Height;
+		var screenSizeChars = screenWidth * screenHeight;
+		var screenSizeBytes = screenSizeChars * bytesPerCharWidth;
+		var screenCharsWidth = screenWidth * 8 / Data.GlobalOptions.CharInfo.Width;
+		var screenRowSize = screenWidth * bytesPerCharWidth;
+		var screenStartAddress = Data.ScreenOptions.ScreenBaseAddress;
 
 		var layerWidth = Screen.Screen.Width;
 		var layerHeight = Screen.Screen.Height;
 		var layerSizeChars = layerWidth * layerHeight;
-		var layerSizeBytes = layerSizeChars * charSize;
-		var layerRowSize = layerWidth * charSize;
-
-		var screenColumns = new[] { 40, 80 };
-		var screenCharColumns = new[]
-		{
-			Data.GlobalOptions.CharInfo.CharsPerScreenWidth40Columns,
-			Data.GlobalOptions.CharInfo.CharsPerScreenWidth80Columns,
-		};
+		var layerSizeBytes = layerSizeChars * bytesPerCharWidth;
+		var layerRowSize = layerWidth * bytesPerCharWidth;
 
 		Logger.Verbose.Separator();
 		Logger.Verbose.Message("Format (hex values in little endian):");
@@ -39,11 +42,38 @@ public class ScreenLookupExporter : BaseExporter
 		// Character info.
 		var formatter = Logger.Verbose.IsEnabled ? TableFormatter.CreateFileFormatter() : null;
 
-		writer.Write((byte)charSize);
-		formatter?.AddFileFormat(size: 1, value: charSize, description: "Character size in bytes");
+		writer.Write((byte)bytesPerCharWidth);
+		formatter?.AddFileFormat(size: 1, value: bytesPerCharWidth, description: "Character width in bytes");
 
-		writer.Write((byte)0xff);
-		formatter?.AddFileFormat(size: 1, value: 0xff, description: "Unused");
+		writer.Write((byte)bytesPerChar);
+		formatter?.AddFileFormat(size: 1, value: bytesPerChar, description: "Character data size in bytes");
+
+		writer.Write((byte)charWidth);
+		formatter?.AddFileFormat(size: 1, value: charWidth, description: "Character width in pixels");
+
+		writer.Write((byte)charHeight);
+		formatter?.AddFileFormat(size: 1, value: charHeight, description: "Character height in pixels");
+
+		// Screen info.
+		formatter?.AddFileSeparator();
+
+		writer.Write((ushort)screenWidth);
+		formatter?.AddFileFormat(size: 2, value: screenWidth, description: "Screen width in characters");
+
+		writer.Write((ushort)screenHeight);
+		formatter?.AddFileFormat(size: 2, value: screenHeight, description: "Screen height in characters");
+		
+		writer.Write((ushort)(screenCharsWidth));
+		formatter?.AddFileFormat(size: 2, value: screenCharsWidth, description: "Number of character per screen width");
+
+		writer.Write((ushort)screenRowSize);
+		formatter?.AddFileFormat(size: 2, value: screenRowSize, description: "Number of bytes per screen width (logical size)");
+
+		writer.Write((uint)screenSizeChars);
+		formatter?.AddFileFormat(size: 4, value: screenSizeChars, description: "Screen size in characters (width * height)");
+
+		writer.Write((uint)screenSizeBytes);
+		formatter?.AddFileFormat(size: 4, value: screenSizeBytes, description: "Screen size in bytes (width * height * char size)");
 
 		// Layer info.
 		formatter?.AddFileSeparator();
@@ -63,29 +93,62 @@ public class ScreenLookupExporter : BaseExporter
 		writer.Write((uint)layerSizeBytes);
 		formatter?.AddFileFormat(size: 4, value: layerSizeBytes, description: "Layer size in bytes (width * height * char size)");
 
-		// Screen info.
-		for (var i = 0; i < screenColumns.Length; i++)
+		void PrintLookupTables(int layer, int column)
 		{
-			var columns = screenColumns[i];
-			var width = screenCharColumns[i];
-			var height = Data.GlobalOptions.CharInfo.CharsPerScreenHeight;  // height is always the same
+			var baseAddress = screenStartAddress + layer * layerSizeBytes + column * bytesPerCharWidth;
+			var shiftBits = 0;
+			var descriptions = new string[] { "Byte 0 (LSB)", "Byte 1", "Byte 2 (MSB)" };
+			var titlePrefix = column switch
+			{
+				0 => "Start of screen row lookup table: ",
+				_ => $"Layer {layer} screen GOTOX lookup table: "
+			};
 
-			formatter?.AddFileSeparator();
+			// Mega 65 only can have screen data anywhere in the first 384KB (0-$60000), so we need 3 bytes for these lookup tables.
+			for (var i = 0; i < 3; i++)
+			{
+				formatter?.AddFileSeparator(isDouble: i == 0);
+				formatter?.AddFileDescription($"{titlePrefix}{descriptions[i]}");
 
-			writer.Write((byte)width);
-			formatter?.AddFileFormat(size: 1, value: width, description: $"Characters per {columns} column screen width");
+				// After first title, we change prefix so it's easier to distinguish between groups that describe the same value.
+				titlePrefix = "";
 
-			writer.Write((byte)height);
-			formatter?.AddFileFormat(size: 1, value: height, description: "Characters per screen height");
+				for (var y = 0; y < Screen.Screen.Rows.Count; y++)
+				{
+					// Calculate address for this byte.
+					var address = baseAddress + y * layerRowSize;
 
-			writer.Write((ushort)(width * charSize));
-			formatter?.AddFileFormat(size: 2, value: width * charSize, description: "Screen row size in bytes");
+					// Prepare full hex address and "emphasize" current byte in the string.
+					var hexAddress = $"{address:X5}";
+					var emphasisEnd = hexAddress.Length - shiftBits / 4;
+					var emphasisStart = Math.Max(0, emphasisEnd - 2);
+					hexAddress = hexAddress.Insert(emphasisEnd, "|");
+					hexAddress = hexAddress.Insert(emphasisStart, "|");
 
-			writer.Write((ushort)(width * height));
-			formatter?.AddFileFormat(size: 2, value: width * height, description: "Screen size in characters");
+					// Prepare the value for current byte only and write it.
+					var shifted = (address >> shiftBits) & 0xff;
+					writer.Write((byte)shifted);
+					formatter?.AddFileFormat(size: 1, value: shifted, description: $"Row {y} (${hexAddress})");
+				}
 
-			writer.Write((ushort)(width * height * charSize));
-			formatter?.AddFileFormat(size: 2, value: width * height * charSize, description: "Screen size in bytes");
+				shiftBits += 8;
+			}
+		}
+
+		var sampleRow = Screen.Screen.Rows[0];
+		var layerIndex = 0;
+		for (var x = 0; x < sampleRow.Columns.Count; x++)
+		{
+			var column = sampleRow.Columns[x];
+
+			switch (column.Type)
+			{
+				case ScreenData.Column.DataType.FirstData:
+				case ScreenData.Column.DataType.Attribute:
+					PrintLookupTables(layerIndex, x);
+					layerIndex++;
+					break;
+			}
 		}
 
 		formatter?.Log(Logger.Verbose.Option);

@@ -195,11 +195,13 @@ InitScreen:
 	{
 		* = * "Data - Info"
 
-		.label LayerWidth = * + 2
-		.label RowLogicalWidth = * + 6
-		.label ScreenWidth = * + 16
-		.label ScreenHeight = * + 17
-		.label ScreenSize = * + 22
+		.label LayerWidth = * + 20
+		.label RowLogicalWidth = * + 24
+		.label ScreenHeight = * + 6
+		.label ScreenSize = * + 16
+		.label Lookup1 = * + 34
+		.label Lookup2 = * + 59
+		.label Lookup3 = * + 84
 
 		#if LEVEL2
 			.import binary "../build/assets/level2/lookup.inf"

@@ -8,6 +8,7 @@ namespace M65Converter.Sources.Helpers.Utils;
 public class TableFormatter
 {
 	private readonly static string SeparatorRow = "----------";
+	private readonly static string DoubleSeparatorRow = "==========";
 
 	/// <summary>
 	/// Optional left header value. If not provided, it remains empty.
@@ -85,6 +86,15 @@ public class TableFormatter
 
 	#region Describing file format
 
+	public void AddFileDescription(string description)
+	{
+		rows.Add(new RowData
+		{
+			Description = description,
+			IsDescription = true
+		});
+	}
+
 	public void AddFileFormat(int size, int value, string description)
 	{
 		// Left header is start-end offset.
@@ -109,9 +119,9 @@ public class TableFormatter
 		fileOffset += size;
 	}
 
-	public void AddFileSeparator()
+	public void AddFileSeparator(bool isDouble = false)
 	{
-		StartNewRow(SeparatorRow);
+		StartNewRow(isDouble ? DoubleSeparatorRow : SeparatorRow);
 	}
 
 	#endregion
@@ -141,7 +151,7 @@ public class TableFormatter
 			var longestRowDesc = LeftHeader ?? string.Empty;
 			foreach (var row in rows)
 			{
-				var description = row.IsSeparator ? string.Empty : row.Description;
+				var description = row.IsSeparator || row.IsDescription ? string.Empty : row.Description;
 				if (description.Length > longestRowDesc.Length)
 				{
 					longestRowDesc = description;
@@ -202,17 +212,17 @@ public class TableFormatter
 			builder.Append(separator);
 		}
 
-		void FormatRowSeparator(List<ColumnLength> columnLengths)
+		void FormatRowSeparator(List<ColumnLength> columnLengths, char separator = '-')
 		{
 			var builder = new StringBuilder();
 
-			AppendValue(builder, columnLengths.Last().Column, "", '-');
+			AppendValue(builder, columnLengths.Last().Column, "", separator);
 
 			for (var x = 0; x < columnLengths.Count - 1; x++)
 			{
 				var columnLength = columnLengths[x].Column;
 				AppendColSeparator(builder, '+');
-				AppendValue(builder, columnLength, "", '-');
+				AppendValue(builder, columnLength, "", separator);
 			}
 
 			logger(builder.ToString());
@@ -274,7 +284,13 @@ public class TableFormatter
 
 				if (row.IsSeparator)
 				{
-					FormatRowSeparator(columnLengths);
+					FormatRowSeparator(columnLengths, row.IsSingleSeparator ? '-' : '=');
+					continue;
+				}
+
+				if (row.IsDescription)
+				{
+					logger(row.Description);
 					continue;
 				}
 
@@ -415,7 +431,10 @@ public class TableFormatter
 
 	private class RowData
 	{
-		public bool IsSeparator { get => Description == SeparatorRow; }
+		public bool IsSeparator { get => IsSingleSeparator || IsDoubleSeparator; }
+		public bool IsSingleSeparator { get => Description == SeparatorRow; }
+		public bool IsDoubleSeparator { get => Description == DoubleSeparatorRow; }
+		public bool IsDescription { get; set; } = false;
 		public string Description { get; set; } = null!;
 		public List<Data> Columns { get; } = new();
 	}

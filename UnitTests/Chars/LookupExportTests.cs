@@ -4,14 +4,14 @@ using UnitTests.Creators;
 
 namespace UnitTests.Chars;
 
-public class PaletteExportTests
+public class LookupExportTests
 {
 	[Theory]
 	[InlineData(CharColourMode.FCM, false)]
 	[InlineData(CharColourMode.FCM, true)]
 	[InlineData(CharColourMode.NCM, false)]
 	[InlineData(CharColourMode.NCM, true)]
-	public void Palette_ShouldExportPalette(CharColourMode chars, bool rrb)
+	public void Lookup_ShouldExportTables(CharColourMode chars, bool rrb)
 	{
 		// setup
 		var data = new DataContainerCreator
@@ -29,13 +29,13 @@ public class PaletteExportTests
 		data.Get().ExportData();
 
 		// verify
-		var expectedDataCreator = new ResourcesCreator.PaletteCreator
+		var expectedDataCreator = new ResourcesCreator.LookupCreator
 		{
 			CharType = chars,
 			IsRRBEnabled = rrb
 		};
 		var expectedData = expectedDataCreator.Get();
-		var actualData = data.Get().UsedOutputStreams.PaletteStreram;
+		var actualData = data.Get().UsedOutputStreams.LookupDataStreams[0];
 		Assert.Equal(expectedData, actualData);
 	}
 }

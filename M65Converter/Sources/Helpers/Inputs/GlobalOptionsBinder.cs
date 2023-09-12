@@ -124,20 +124,18 @@ public class GlobalOptions
 				{
 					Width = 8,
 					Height = 8,
-					PixelDataSize = 2,
-					CharDataSize = 64,
-					ColoursPerChar = 256,
-					CharsPerScreenWidth80Columns = 80,
+					BytesPerWidth = 2,
+					BytesPerCharData = 64,
+					ColoursPerChar = 256
 				},
 
 				CharColourMode.NCM => new CharInfo
 				{
 					Width = 16,
 					Height = 8,
-					PixelDataSize = 2,
-					CharDataSize = 64,
-					ColoursPerChar = 16,
-					CharsPerScreenWidth80Columns = 40,
+					BytesPerWidth = 2,
+					BytesPerCharData = 64,
+					ColoursPerChar = 16
 				},
 
 				_ => throw new ArgumentException($"Unknown tile type {ColourMode}")

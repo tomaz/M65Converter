@@ -2,6 +2,8 @@
 using M65Converter.Sources.Data.Providers;
 using M65Converter.Sources.Helpers.Inputs;
 
+using SixLabors.ImageSharp;
+
 using UnitTests.Models;
 
 namespace UnitTests.Creators;
@@ -30,6 +32,10 @@ public class DataContainerCreator
 			
 			ScreenOptions = new ScreenOptions
 			{
+				Inputs = new[] { ResourcesCreator.CharsInput() },
+				ScreenSize = new Size(40, 25),
+				ScreenBaseAddress = 0x10000,
+				CharsBaseAddress = 0x20000,
 				IsRasterRewriteBufferSupported = IsRRBEnabled
 			}
 		};
@@ -39,9 +45,13 @@ public class DataContainerCreator
 
 	public class TestDataContainer : DataContainer
 	{
-		protected override IStreamProvider? OutputStreamProvider(ScreenData data, Func<FileInfo?> templatePicker) => new MemoryStreamProvider
+		protected override IStreamProvider? OutputStreamProvider(ScreenData data, Func<FileInfo?> templatePicker)
 		{
-			Filename = templatePicker()?.Name ?? string.Empty,
-		};
+			// We always create a memory stream, regardless of whether name template is setup or not. This way we don't have to setup each and every name template in options above.
+			return new MemoryStreamProvider
+			{
+				Filename = templatePicker()?.Name ?? string.Empty,
+			};
+		}
 	}
 }

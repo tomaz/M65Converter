@@ -83,6 +83,16 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] export_fcm_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] export_fcm_palette {
             get {
                 object obj = ResourceManager.GetObject("export_fcm_palette", resourceCulture);
@@ -106,6 +116,16 @@ namespace UnitTests {
         internal static byte[] export_fcm_rrb_colour {
             get {
                 object obj = ResourceManager.GetObject("export_fcm_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_rrb_lookup", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -163,6 +183,16 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] export_ncm_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] export_ncm_palette {
             get {
                 object obj = ResourceManager.GetObject("export_ncm_palette", resourceCulture);
@@ -186,6 +216,16 @@ namespace UnitTests {
         internal static byte[] export_ncm_rrb_colour {
             get {
                 object obj = ResourceManager.GetObject("export_ncm_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_rrb_lookup", resourceCulture);
                 return ((byte[])(obj));
             }
         }

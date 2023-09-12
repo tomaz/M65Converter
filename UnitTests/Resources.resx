@@ -124,6 +124,9 @@
   <data name="export_fcm_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="export_fcm_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="export_fcm_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -132,6 +135,9 @@
   </data>
   <data name="export_fcm_rrb_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm-rrb-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_rrb_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm-rrb-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="export_fcm_rrb_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm-rrb-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -148,6 +154,9 @@
   <data name="export_ncm_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="export_ncm_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="export_ncm_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -156,6 +165,9 @@
   </data>
   <data name="export_ncm_rrb_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm-rrb-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_rrb_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm-rrb-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="export_ncm_rrb_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm-rrb-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

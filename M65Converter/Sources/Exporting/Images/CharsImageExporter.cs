@@ -534,7 +534,7 @@ public class CharsImageExporter : BaseImageExporter
 					point: position.TopHeaderPos
 				);
 
-				addressOffsetX += Data.GlobalOptions.CharInfo.PixelDataSize;
+				addressOffsetX += Data.GlobalOptions.CharInfo.BytesPerWidth;
 			}
 
 			// Draw left header, only when drawing left layer column.

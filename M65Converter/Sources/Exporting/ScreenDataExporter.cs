@@ -21,7 +21,7 @@ public class ScreenDataExporter : BaseExporter
 		Logger.Verbose.Option($"Expected to be copied to memory address ${Data.ScreenOptions.CharsBaseAddress:X}");
 		Logger.Verbose.Option($"Char start index {Data.CharIndexInRam(0)} (${Data.CharIndexInRam(0):X})");
 		Logger.Verbose.Option("All values as char indices");
-		Logger.Verbose.Option($"Each char uses {Data.GlobalOptions.CharInfo.PixelDataSize} bytes");
+		Logger.Verbose.Option($"Each char uses {Data.GlobalOptions.CharInfo.BytesPerWidth} bytes");
 		Logger.Verbose.Option("Top-to-down, left-to-right order");
 
 		var formatter = Logger.Verbose.IsEnabled

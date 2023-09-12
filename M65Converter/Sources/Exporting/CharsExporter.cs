@@ -32,14 +32,14 @@ public class CharsExporter : BaseExporter
 		}
 		Logger.Verbose.Option("All pixels as palette indices");
 		Logger.Verbose.Option("Top-to-down, left-to-right order");
-		Logger.Verbose.Option($"Character size is {Data.GlobalOptions.CharInfo.CharDataSize} bytes");
+		Logger.Verbose.Option($"Character size is {Data.GlobalOptions.CharInfo.BytesPerCharData} bytes");
 
 		var charData = Logger.Verbose.IsEnabled ? new List<byte>() : null;
 		var formatter = Logger.Verbose.IsEnabled
 			? new TableFormatter
 			{
 				IsHex = true,
-				Headers = new[] { "Address", "Index", $"Data ({Data.GlobalOptions.CharInfo.CharDataSize} bytes)" },
+				Headers = new[] { "Address", "Index", $"Data ({Data.GlobalOptions.CharInfo.BytesPerCharData} bytes)" },
 				Prefix = " $",
 				Suffix = " "
 			}
