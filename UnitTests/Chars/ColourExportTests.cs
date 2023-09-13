@@ -1,5 +1,4 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Inputs;
 
 using UnitTests.Creators;
 

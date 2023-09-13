@@ -5,7 +5,7 @@ using M65Converter.Sources.Helpers.Utils;
 using System.CommandLine;
 using System.CommandLine.Binding;
 
-namespace M65Converter.Sources.Helpers.Inputs;
+namespace M65Converter.Sources.Runners.Options;
 
 /// <summary>
 /// Manages global command line options.

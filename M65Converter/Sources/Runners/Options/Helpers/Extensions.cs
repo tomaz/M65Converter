@@ -1,6 +1,6 @@
 ﻿using System.CommandLine;
 
-namespace M65Converter.Sources.Helpers.Inputs;
+namespace M65Converter.Sources.Runners.Options.Helpers;
 
 public static class CommandExtensions
 {

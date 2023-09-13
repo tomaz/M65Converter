@@ -6,7 +6,7 @@ using M65Converter.Runners;
 using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Providers;
 
-namespace M65Converter.Sources.Helpers.Inputs;
+namespace M65Converter.Sources.Runners.Options;
 
 /// <summary>
 /// Generic options binder.
@@ -141,8 +141,8 @@ public static class OptionsExtensions
 	public static Size ParseAsSize(this string value, int defaultHeight = 0)
 	{
 		var components = value.Split('x');
-		var width = ParseAsInt(components[0].Trim());
-		var height = components.Length >= 2 ? ParseAsInt(components[1].Trim()) : defaultHeight;
+		var width = components[0].Trim().ParseAsInt();
+		var height = components.Length >= 2 ? components[1].Trim().ParseAsInt() : defaultHeight;
 		return new Size(width, height);
 	}
 }

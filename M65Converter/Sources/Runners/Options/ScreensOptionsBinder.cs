@@ -4,7 +4,7 @@ using M65Converter.Sources.Data.Providers;
 using System.CommandLine.Binding;
 using System.CommandLine;
 
-namespace M65Converter.Sources.Helpers.Inputs;
+namespace M65Converter.Sources.Runners.Options;
 
 /// <summary>
 /// Manages command line options for screens runner.

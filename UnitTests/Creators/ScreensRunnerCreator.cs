@@ -1,6 +1,6 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Inputs;
 using M65Converter.Sources.Runners;
+using M65Converter.Sources.Runners.Options;
 
 namespace UnitTests.Creators;
 

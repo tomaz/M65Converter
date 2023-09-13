@@ -1,6 +1,5 @@
 ﻿
 using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Helpers.Inputs;
 using M65Converter.Sources.Helpers.Utils;
 
 namespace M65Converter.Sources.Exporting;

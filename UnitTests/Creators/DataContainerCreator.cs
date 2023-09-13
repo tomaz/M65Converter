@@ -1,6 +1,6 @@
 ﻿using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Providers;
-using M65Converter.Sources.Helpers.Inputs;
+using M65Converter.Sources.Runners.Options;
 
 using SixLabors.ImageSharp;
 
