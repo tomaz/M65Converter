@@ -2,6 +2,7 @@
 using M65Converter.Sources.Data.Providers;
 using M65Converter.Sources.Exporting;
 using M65Converter.Sources.Exporting.Utils;
+using M65Converter.Sources.Helpers.Converters;
 using M65Converter.Sources.Helpers.Utils;
 using M65Converter.Sources.Runners.Options;
 
@@ -17,17 +18,17 @@ public class DataContainer
 	/// <summary>
 	/// Global options.
 	/// </summary>
-	public GlobalOptions GlobalOptions { get; set; } = null!;
+	public GlobalOptions GlobalOptions { get; set; } = new();
 
 	/// <summary>
 	/// All options for generating characters data.
 	/// </summary>
-	public CharOptions CharOptions { get; set; } = null!;
+	public CharOptions? CharOptions { get; set; }
 
 	/// <summary>
 	/// All options for generating screens and colours data.
 	/// </summary>
-	public ScreenOptions ScreenOptions { get; set; } = null!;
+	public ScreenOptions? ScreenOptions { get; set; }
 
 	/// <summary>
 	/// All the parsed characters.
@@ -106,6 +107,49 @@ public class DataContainer
 
 	#endregion
 
+	#region Generating
+
+	/// <summary>
+	/// Generates everything that's required before exporting from all gathered data. Should be called before <see cref="ExportData"/>.
+	/// </summary>
+	public void GenerateData()
+	{
+		// Palette is generated after all parsing completes. This ensures data from all runners is taken into account (for example base chars, screens and RRB sprites).
+		GenerateOutputPalette();
+
+		// We should have already validated the data while merging palette, but just in case do validate the final result again.
+		ValidateData();
+	}
+
+	/// <summary>
+	/// Generates output palette from all collected characters.
+	/// </summary>
+	private void GenerateOutputPalette()
+	{
+		Logger.Debug.Separator();
+
+		new TimeRunner
+		{
+			Title = "Merging palette"
+		}
+		.Run(() =>
+		{
+			var options = new PaletteMerger.OptionsType
+			{
+				Images = CharsContainer.Images,
+				Is4Bit = GlobalOptions.ColourMode == CharColourMode.NCM,
+				IsUsingTransparency = true,
+			};
+
+			// Note: merging not only prepares the final palette for export, but also remaps all character images colours to point to this generated palette.
+			Palette = PaletteMerger
+				.Create(options)
+				.Merge();
+		});
+	}
+
+	#endregion
+
 	#region Exporting
 
 	/// <summary>
@@ -142,9 +186,9 @@ public class DataContainer
 
 	private void ExportChars()
 	{
-		UsedOutputStreams.CharsStream = CharOptions.OutputCharsStream;
+		UsedOutputStreams.CharsStream = CharOptions?.OutputCharsStream;
 		
-		if (CharOptions.OutputCharsStream == null) return;
+		if (CharOptions?.OutputCharsStream == null) return;
 
 		CreateExporter("chars", CharOptions.OutputCharsStream).Export(writer =>
 		{
@@ -159,9 +203,9 @@ public class DataContainer
 
 	private void ExportPalette()
 	{
-		UsedOutputStreams.PaletteStreram = CharOptions.OutputPaletteStream;
+		UsedOutputStreams.PaletteStream = CharOptions?.OutputPaletteStream;
 
-		if (CharOptions.OutputPaletteStream == null) return;
+		if (CharOptions?.OutputPaletteStream == null) return;
 
 		CreateExporter("palette", CharOptions.OutputPaletteStream).Export(writer =>
 		{
@@ -176,7 +220,7 @@ public class DataContainer
 
 	private void ExportScreenColour(ScreenData data)
 	{
-		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputColourTemplate);
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions?.OutputColourTemplate);
 		if (streamProvider == null) return;
 
 		UsedOutputStreams.ColourDataStreams.Add(streamProvider);
@@ -194,7 +238,7 @@ public class DataContainer
 
 	private void ExportScreenData(ScreenData data)
 	{
-		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputScreenTemplate);
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions?.OutputScreenTemplate);
 		if (streamProvider == null) return;
 
 		UsedOutputStreams.ScreenDataStreams.Add(streamProvider);
@@ -212,7 +256,7 @@ public class DataContainer
 
 	private void ExportLookupTable(ScreenData data)
 	{
-		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputLookupTemplate);
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions?.OutputLookupTemplate);
 		if (streamProvider == null) return;
 
 		UsedOutputStreams.LookupDataStreams.Add(streamProvider);
@@ -232,7 +276,7 @@ public class DataContainer
 	{
 		if (GlobalOptions.InfoImageRenderingScale <= 0) return;
 
-		var streamProvider = OutputStreamProvider(data, () => ScreenOptions.OutputInfoTemplate);
+		var streamProvider = OutputStreamProvider(data, () => ScreenOptions?.OutputInfoTemplate);
 		if (streamProvider == null) return;
 
 		UsedOutputStreams.InfoImageStreams.Add(streamProvider);
@@ -250,12 +294,24 @@ public class DataContainer
 
 	private void PrintPotentialExportIssues()
 	{
-		var isCharsOut = CharOptions.OutputCharsStream != null;
-		var isPaletteOut = CharOptions.OutputPaletteStream != null;
+		bool IsEnabled(Func<object?> check)
+		{
+			try
+			{
+				return check() != null;
+			}
+			catch
+			{
+				return false;
+			}
+		}
 
-		var isScreenOut = ScreenOptions.OutputScreenTemplate != null;
-		var isColourOut = ScreenOptions.OutputColourTemplate != null;
-		var isLookupOut = ScreenOptions.OutputLookupTemplate != null;
+		var isCharsOut = IsEnabled(() => CharOptions?.OutputCharsStream);
+		var isPaletteOut = IsEnabled(() => CharOptions?.OutputPaletteStream);
+
+		var isScreenOut = IsEnabled(() => ScreenOptions?.OutputScreenTemplate);
+		var isColourOut = IsEnabled(() => ScreenOptions?.OutputColourTemplate);
+		var isLookupOut = IsEnabled(() => ScreenOptions?.OutputLookupTemplate);
 		var isAnyLevelOut = isScreenOut || isColourOut || isLookupOut;
 
 		var isHeaderPrinted = false;
@@ -319,7 +375,7 @@ public class DataContainer
 	/// <summary>
 	/// Takes "relative" character index (0 = first generated character) and converts it to absolute character index as needed for Mega 65 hardware, taking into condideration char base address.
 	/// </summary>
-	public int CharIndexInRam(int relativeIndex) => GlobalOptions.CharInfo.CharIndexInRam(ScreenOptions.CharsBaseAddress, relativeIndex);
+	public int CharIndexInRam(int relativeIndex) => GlobalOptions.CharInfo.CharIndexInRam(GlobalOptions.CharsBaseAddress, relativeIndex);
 
 	#endregion
 
@@ -328,7 +384,7 @@ public class DataContainer
 	public class OutputStreams
 	{
 		public IStreamProvider? CharsStream { get; set; }
-		public IStreamProvider? PaletteStreram { get; set; }
+		public IStreamProvider? PaletteStream { get; set; }
 		public List<IStreamProvider> ScreenDataStreams { get; } = new();
 		public List<IStreamProvider> ColourDataStreams { get; } = new();
 		public List<IStreamProvider> LookupDataStreams { get; } = new();

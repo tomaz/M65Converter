@@ -21,7 +21,7 @@ public class ScreensRunner : BaseRunner
 	{
 		base.OnValidate();
 
-		int charsAddress = Data.ScreenOptions.CharsBaseAddress;
+		int charsAddress = Data.GlobalOptions.CharsBaseAddress;
 		int charSize = Data.GlobalOptions.CharInfo.BytesPerCharData;
 		if ((charsAddress % charSize) != 0)
 		{
@@ -56,7 +56,7 @@ public class ScreensRunner : BaseRunner
 		new InputFilesHandler
 		{
 			TitlePrefix = "Parsing layers from",
-			Sources = Data.ScreenOptions.Inputs
+			Sources = Data.ScreenOptions?.Inputs
 		}
 		.Run((index, input) =>
 		{
@@ -89,9 +89,6 @@ public class ScreensRunner : BaseRunner
 			// If all went well, we should add the level to the temporary list.
 			mergedLevels.Add(mergedLevel);
 		});
-
-		// After all layers are parsed, we should prepare the rest of the data - palette and then all the screens. Note that the order is important, we should first prepare palette.
-		PrepareExportPalette();
 
 		// After palette is ready, we should prepare screen and colour data for each merged level.
 		foreach (var mergedLevel in mergedLevels)
@@ -140,7 +137,7 @@ public class ScreensRunner : BaseRunner
 	{
 		var options = new LayerMerger.OptionsType
 		{
-			IsRasterRewriteBufferSupported = Data.ScreenOptions.IsRasterRewriteBufferSupported,
+			IsRasterRewriteBufferSupported = Data.ScreenOptions?.IsRasterRewriteBufferSupported ?? false,
 			IsCompositeImageAllowed = isCompositeImageAllowed,
 		};
 
@@ -180,37 +177,7 @@ public class ScreensRunner : BaseRunner
 		}
 
 		Logger.Verbose.Separator();
-		Logger.Debug.Message($"{Data.CharsContainer.Images.Count} characters found");
-	}
-
-	/// <summary>
-	/// Merges all different colours from all layers into a single "global" palette to make it ready for exporting.
-	/// </summary>
-	private void PrepareExportPalette()
-	{
-		Logger.Debug.Separator();
-
-		new TimeRunner
-		{
-			Title = "Merging palette"
-		}
-		.Run(() =>
-		{
-			var options = new PaletteMerger.OptionsType
-			{
-				Images = Data.CharsContainer.Images,
-				Is4Bit = Data.GlobalOptions.ColourMode == CharColourMode.NCM,
-				IsUsingTransparency = true,
-			};
-
-			// Note: merging not only prepares the final palette for export, but also remaps all character images colours to point to this generated palette.
-			Data.Palette = PaletteMerger
-				.Create(options)
-				.Merge();
-
-			// We should already validate the data while merging, but just in case do validate the final result again.
-			Data.ValidateData();
-		});
+		Logger.Debug.Message($"{Data.CharsContainer.Images.Count} total characters found");
 	}
 
 	/// <summary>
@@ -436,14 +403,14 @@ public class ScreensRunner : BaseRunner
 	{
 		Logger.Debug.Separator();
 
-		if (Data.ScreenOptions.IsRasterRewriteBufferSupported)
+		if (Data.ScreenOptions?.IsRasterRewriteBufferSupported ?? false)
 		{
 			Logger.Debug.Option("Individual layers will be exported as RRB");
 		}
 		else
 		{
 			Logger.Debug.Option("Layers will be merged");
-			if (Data.CharOptions.Inputs?.Length > 0)
+			if (Data.CharOptions?.Inputs?.Length > 0)
 			{
 				Logger.Info.Option("NOTE: merging layers may result in extra characters to be generated on top of base character set. Especially if layers use characters with transparent pixels.");
 			}
@@ -459,7 +426,7 @@ public class ScreensRunner : BaseRunner
 		Logger.Debug.Option($"Character size: {Data.GlobalOptions.CharInfo.BytesPerWidth} bytes");
 
 		var firstChar = Data.CharIndexInRam(0);
-		Logger.Debug.Option($"Characters base address: ${Data.ScreenOptions.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");
+		Logger.Debug.Option($"Characters base address: ${Data.GlobalOptions.CharsBaseAddress:X}, first char index {firstChar} (${firstChar:X})");
 
 		if (Data.GlobalOptions.InfoImageRenderingScale > 0)
 		{

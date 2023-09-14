@@ -1,22 +1,14 @@
-﻿using M65Converter.Sources.Data.Intermediate;
-using M65Converter.Sources.Runners;
-using M65Converter.Sources.Runners.Options;
+﻿using M65Converter.Sources.Runners;
 
 namespace UnitTests.Creators;
 
-public class ScreensRunnerCreator
+public class ScreensRunnerCreator : BaseRunnerCreator<ScreensRunner>
 {
-	public DataContainer Data { get; init; } = null!;
-
-	private ScreensRunner? runner;
-
-	public ScreensRunner Get()
+	protected override ScreensRunner CreateInstance()
 	{
-		runner ??= new ScreensRunner()
+		return new ScreensRunner()
 		{
 			Data = Data
 		};
-
-		return runner;
 	}
 }

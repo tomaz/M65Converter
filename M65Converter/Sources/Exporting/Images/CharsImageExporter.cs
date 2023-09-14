@@ -70,7 +70,7 @@ public class CharsImageExporter : BaseImageExporter
 				// Prepare text sizes. Note: if we have 0 characters this will yield invalid values, but the result of the action will still be empty rectangle because builder enumeration will not happen.
 				var lastCharIndex = Data.CharsContainer.Images.Count - 1;
 				var indexTextSize = measures.FontRenderer.Measure(lastCharIndex.ToMeasureString());
-				var addressTextSize = Data.ScreenOptions.CharsBaseAddress >= 0
+				var addressTextSize = Data.GlobalOptions.CharsBaseAddress >= 0
 					? measures.FontRenderer.Measure(CharRamAddressString(lastCharIndex))
 					: new Size();
 

@@ -14,7 +14,7 @@ public class ScreensOptionsBinder : BaseOptionsBinder<ScreenOptions>
 	#region Command line
 
 	private readonly Argument<FileInfo[]> inputs = new(
-		name: "--inputs",
+		name: "inputs",
 		description: "One or more input files or folders"
 	)
 	{
@@ -39,24 +39,6 @@ public class ScreensOptionsBinder : BaseOptionsBinder<ScreenOptions>
 	private readonly Option<FileInfo?> outputInfo = new(
 		name: "--out-info",
 		description: "Path and filename of the generated info image output, relative to current folder. If missing (or global --info value is 0), image is not exported. Optional {name} template is replaced with level name for each input"
-	);
-
-	private readonly Option<string> screenSize = new(
-		name: "--screen",
-		description: "Screen size measured in characters. Valid formats: \"<width> x <height>\", \"<width>\"",
-		getDefaultValue: () => "40x25"
-	);
-
-	private readonly Option<string> screenBaseAddress = new(
-		name: "--screen-address",
-		description: "Base address where screen data will be loaded into on Mega 65",
-		getDefaultValue: () => "$0800"
-	);
-
-	private readonly Option<string> charBaseAddress = new(
-		name: "--chars-address",
-		description: "Base address where characters will be loaded into on Mega 65",
-		getDefaultValue: () => "$10000"
 	);
 
 	private readonly Option<bool> rasterRewriteBuffer = new(
@@ -99,9 +81,6 @@ public class ScreensOptionsBinder : BaseOptionsBinder<ScreenOptions>
 			OutputColourTemplate = bindingContext.ParseResult.GetValueForOption(outputColour),
 			OutputLookupTemplate = bindingContext.ParseResult.GetValueForOption(outputLookup),
 			OutputInfoTemplate = bindingContext.ParseResult.GetValueForOption(outputInfo),
-			ScreenSize = bindingContext.ParseResult.GetValueForOption(screenSize)?.ParseAsSize() ?? new Size(40, 25),
-			ScreenBaseAddress = bindingContext.ParseResult.GetValueForOption(screenBaseAddress)?.ParseAsInt() ?? 0x800,
-			CharsBaseAddress = bindingContext.ParseResult.GetValueForOption(charBaseAddress)?.ParseAsInt() ?? 0x10000,
 			IsRasterRewriteBufferSupported = bindingContext.ParseResult.GetValueForOption(rasterRewriteBuffer),
 		};
 	}
@@ -144,21 +123,6 @@ public class ScreenOptions
 	/// If RRB is enabled, then each layer will be treated as its own RRB layer. Otherwise all layers will be squashed into a single layer. The latter option works best when characters are fully opaque so the ones in top layers fully cover the ones below.
 	/// </summary>
 	public bool IsRasterRewriteBufferSupported { get; init; }
-
-	/// <summary>
-	/// Base address where the screen data will be loaded into on Mega 65.
-	/// </summary>
-	public int ScreenBaseAddress { get; init; }
-
-	/// <summary>
-	/// Base address where the characters will be loaded into on Mega 65.
-	/// </summary>
-	public int CharsBaseAddress { get; init; }
-
-	/// <summary>
-	/// Screen size in terms of character columns and rows.
-	/// </summary>
-	public Size ScreenSize { get; init; }
 }
 
 #endregion

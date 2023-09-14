@@ -8,40 +8,48 @@ using UnitTests.Models;
 
 namespace UnitTests.Creators;
 
-public class DataContainerCreator
+public class DataContainerCreator : BaseCreator<DataContainer>
 {
-	public CharColourMode CharType { get; init; }
-	public bool IsRRBEnabled { get; init; }
+	#region Overrides
 
-	private DataContainer? data;
-
-	public DataContainer Get()
+	protected override DataContainer OnCreateObject()
 	{
-		data ??= new TestDataContainer
+		return new TestDataContainer
 		{
 			GlobalOptions = new GlobalOptions
 			{
-				ColourMode = CharType,
-			},
-			
-			CharOptions = new CharOptions
-			{
-				OutputCharsStream = new MemoryStreamProvider(),
-				OutputPaletteStream = new MemoryStreamProvider()
-			},
-			
-			ScreenOptions = new ScreenOptions
-			{
-				Inputs = new[] { ResourcesCreator.CharsInput() },
+				ColourMode = ColourMode,
 				ScreenSize = new Size(40, 25),
 				ScreenBaseAddress = 0x10000,
 				CharsBaseAddress = 0x20000,
+			},
+
+			CharOptions = new CharOptions
+			{
+				// Note: we always create output streams, regardless of options, but input is only used if chars runner is requested.
+				Inputs = new ResourcesCreator.InputBaseCharsCreator(this).Get(),
+				OutputCharsStream = new MemoryStreamProvider(),
+				OutputPaletteStream = new MemoryStreamProvider()
+			},
+
+			ScreenOptions = new ScreenOptions
+			{
+				// Note: we don't have to provide output file template options since our `TestDataContainer` class always generates an output memory stream - see below.
+				Inputs = new ResourcesCreator.InputScreensCreator(this).Get(),
 				IsRasterRewriteBufferSupported = IsRRBEnabled
 			}
 		};
-
-		return data;
 	}
+
+	protected override IStreamProvider? OnGetActualStream(DataContainer data)
+	{
+		// We should not call this method for data container!
+		throw new NotImplementedException();
+	}
+
+	#endregion
+
+	#region Declarations
 
 	public class TestDataContainer : DataContainer
 	{
@@ -54,4 +62,6 @@ public class DataContainerCreator
 			};
 		}
 	}
+
+	#endregion
 }

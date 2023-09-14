@@ -82,7 +82,7 @@ public class CharsExporter : BaseExporter
 				}
 			}
 
-			formatter?.AppendData(Data.ScreenOptions.CharsBaseAddress + startingFilePosition);
+			formatter?.AppendData(Data.GlobalOptions.CharsBaseAddress + startingFilePosition);
 			formatter?.AppendData(Data.CharIndexInRam(charIndex));
 			if (charData != null)
 			{

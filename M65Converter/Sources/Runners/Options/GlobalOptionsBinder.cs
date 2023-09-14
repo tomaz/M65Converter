@@ -40,6 +40,24 @@ public class GlobalOptionsBinder : BaseOptionsBinder<GlobalOptions>
 		getDefaultValue: () => CharColourMode.FCM
 	);
 
+	private readonly Option<string> screenSize = new(
+		name: "--screen",
+		description: "Screen size measured in characters. Valid formats: \"<width> x <height>\", \"<width>\"",
+		getDefaultValue: () => "40x25"
+	);
+
+	private readonly Option<string> screenBaseAddress = new(
+		name: "--screen-address",
+		description: "Base address where screen data will be loaded into on Mega 65",
+		getDefaultValue: () => "$0800"
+	);
+
+	private readonly Option<string> charBaseAddress = new(
+		name: "--chars-address",
+		description: "Base address where characters will be loaded into on Mega 65",
+		getDefaultValue: () => "$10000"
+	);
+
 	private readonly Option<int> infoImageScale = new(
 		name: "--info",
 		description: "Info image scale, 1 or greater to enable, 0 to disable. This is global scale/on/off switch, you still need to enable specific images generation - see options for individual commands. NOTE: info images generation can be quite slow!",
@@ -78,6 +96,9 @@ public class GlobalOptionsBinder : BaseOptionsBinder<GlobalOptions>
 		return new GlobalOptions
 		{
 			ColourMode = bindingContext.ParseResult.GetValueForOption(colourMode),
+			ScreenSize = bindingContext.ParseResult.GetValueForOption(screenSize)?.ParseAsSize() ?? new Size(40, 25),
+			ScreenBaseAddress = bindingContext.ParseResult.GetValueForOption(screenBaseAddress)?.ParseAsInt() ?? 0x800,
+			CharsBaseAddress = bindingContext.ParseResult.GetValueForOption(charBaseAddress)?.ParseAsInt() ?? 0x10000,
 			InfoImageRenderingScale = bindingContext.ParseResult.GetValueForOption(infoImageScale)
 		};
 	}
@@ -105,6 +126,21 @@ public class GlobalOptions
 	/// The renderding scale for the info images. 0 to prevent rendering.
 	/// </summary>
 	public int InfoImageRenderingScale { get; init; }
+
+	/// <summary>
+	/// Base address where the screen data will be loaded into on Mega 65.
+	/// </summary>
+	public int ScreenBaseAddress { get; init; }
+
+	/// <summary>
+	/// Base address where the characters will be loaded into on Mega 65.
+	/// </summary>
+	public int CharsBaseAddress { get; init; }
+
+	/// <summary>
+	/// Screen size in terms of character columns and rows.
+	/// </summary>
+	public Size ScreenSize { get; init; }
 
 	/// <summary>
 	/// Colour mode to use for characters related data.

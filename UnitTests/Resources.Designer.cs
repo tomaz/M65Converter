@@ -63,29 +63,149 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] export_fcm_base_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_screens_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_screens_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] export_fcm_chars {
             get {
                 object obj = ResourceManager.GetObject("export_fcm_chars", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] export_fcm_colour {
-            get {
-                object obj = ResourceManager.GetObject("export_fcm_colour", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] export_fcm_lookup {
-            get {
-                object obj = ResourceManager.GetObject("export_fcm_lookup", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -113,26 +233,6 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] export_fcm_rrb_colour {
-            get {
-                object obj = ResourceManager.GetObject("export_fcm_rrb_colour", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] export_fcm_rrb_lookup {
-            get {
-                object obj = ResourceManager.GetObject("export_fcm_rrb_lookup", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
         internal static byte[] export_fcm_rrb_palette {
             get {
                 object obj = ResourceManager.GetObject("export_fcm_rrb_palette", resourceCulture);
@@ -143,9 +243,9 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] export_fcm_rrb_screen {
+        internal static byte[] export_fcm_screens_chars {
             get {
-                object obj = ResourceManager.GetObject("export_fcm_rrb_screen", resourceCulture);
+                object obj = ResourceManager.GetObject("export_fcm_screens_chars", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -153,9 +253,229 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] export_fcm_screen {
+        internal static byte[] export_fcm_screens_colour {
             get {
-                object obj = ResourceManager.GetObject("export_fcm_screen", resourceCulture);
+                object obj = ResourceManager.GetObject("export_fcm_screens_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_screens_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_screens_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_screens_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_screens_screen", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -166,26 +486,6 @@ namespace UnitTests {
         internal static byte[] export_ncm_chars {
             get {
                 object obj = ResourceManager.GetObject("export_ncm_chars", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] export_ncm_colour {
-            get {
-                object obj = ResourceManager.GetObject("export_ncm_colour", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] export_ncm_lookup {
-            get {
-                object obj = ResourceManager.GetObject("export_ncm_lookup", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -213,26 +513,6 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] export_ncm_rrb_colour {
-            get {
-                object obj = ResourceManager.GetObject("export_ncm_rrb_colour", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] export_ncm_rrb_lookup {
-            get {
-                object obj = ResourceManager.GetObject("export_ncm_rrb_lookup", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
         internal static byte[] export_ncm_rrb_palette {
             get {
                 object obj = ResourceManager.GetObject("export_ncm_rrb_palette", resourceCulture);
@@ -243,9 +523,9 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] export_ncm_rrb_screen {
+        internal static byte[] export_ncm_screens_chars {
             get {
-                object obj = ResourceManager.GetObject("export_ncm_rrb_screen", resourceCulture);
+                object obj = ResourceManager.GetObject("export_ncm_screens_chars", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -253,9 +533,99 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] export_ncm_screen {
+        internal static byte[] export_ncm_screens_colour {
             get {
-                object obj = ResourceManager.GetObject("export_ncm_screen", resourceCulture);
+                object obj = ResourceManager.GetObject("export_ncm_screens_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_screens_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_screens_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] input_base_chars {
+            get {
+                object obj = ResourceManager.GetObject("input_base_chars", resourceCulture);
                 return ((byte[])(obj));
             }
         }

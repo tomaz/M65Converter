@@ -24,13 +24,13 @@ public class CharsRunner : BaseRunner
 
 	private void ParseInputs()
 	{
-		if (Data.CharOptions.Inputs?.Length == 0) return;
+		if (Data.CharOptions?.Inputs?.Length == 0) return;
 
 		// Parse all inputs.
 		new InputFilesHandler
 		{
 			TitlePrefix = "Parsing base chars from",
-			Sources = Data.CharOptions.Inputs!,
+			Sources = Data.CharOptions?.Inputs,
 		}
 		.Run((index, input) =>
 		{
@@ -48,7 +48,7 @@ public class CharsRunner : BaseRunner
 			.Split(image, Data.CharsContainer);
 
 			// Note: we ignore indexed image for base characters. We only need actual layers from LDtk.
-			Logger.Verbose.Message($"Found {result.ParsedCount}, added {result.AddedCount} characters");
+			Logger.Debug.Message($"Found {result.ParsedCount}, added {result.AddedCount} characters");
 		});
 	}
 
@@ -65,7 +65,7 @@ public class CharsRunner : BaseRunner
 	{
 		Logger.Debug.Separator();
 
-		if (Data.CharOptions.Inputs?.Length > 0)
+		if (Data.CharOptions?.Inputs?.Length > 0)
 		{
 			Logger.Debug.Option($"Base characters will be generated from:");
 			foreach (var input in Data.CharOptions.Inputs)

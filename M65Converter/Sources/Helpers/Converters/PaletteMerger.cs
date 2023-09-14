@@ -56,7 +56,7 @@ public abstract class PaletteMerger
 	/// </summary>
 	public List<ColourData> Merge()
 	{
-		Logger.Debug.Message("Merging palette");
+		Logger.Verbose.Message("Merging palette");
 
 		var result = new List<ColourData>();
 

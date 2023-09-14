@@ -29,6 +29,7 @@ new TimeRunner
 	{
 		var result = CreateRootCommand(data).InvokeAllCommands(args);
 
+		data.GenerateData();
 		data.ExportData();
 	}
 	catch (Exception e)

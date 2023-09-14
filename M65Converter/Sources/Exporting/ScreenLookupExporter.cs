@@ -22,13 +22,13 @@ public class ScreenLookupExporter : BaseExporter
 		var charWidth = Data.GlobalOptions.CharInfo.Width;
 		var charHeight = Data.GlobalOptions.CharInfo.Height;
 
-		var screenWidth = Data.ScreenOptions.ScreenSize.Width;
-		var screenHeight = Data.ScreenOptions.ScreenSize.Height;
+		var screenWidth = Data.GlobalOptions.ScreenSize.Width;
+		var screenHeight = Data.GlobalOptions.ScreenSize.Height;
 		var screenSizeChars = screenWidth * screenHeight;
 		var screenSizeBytes = screenSizeChars * bytesPerCharWidth;
 		var screenCharsWidth = screenWidth * 8 / Data.GlobalOptions.CharInfo.Width;
 		var screenRowSize = screenWidth * bytesPerCharWidth;
-		var screenStartAddress = Data.ScreenOptions.ScreenBaseAddress;
+		var screenStartAddress = Data.GlobalOptions.ScreenBaseAddress;
 
 		var layerWidth = Screen.Screen.Width;
 		var layerHeight = Screen.Screen.Height;

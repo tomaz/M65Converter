@@ -18,7 +18,7 @@ public class ScreenDataExporter : BaseExporter
 	public override void Export(BinaryWriter writer)
 	{
 		Logger.Verbose.Message("Format:");
-		Logger.Verbose.Option($"Expected to be copied to memory address ${Data.ScreenOptions.CharsBaseAddress:X}");
+		Logger.Verbose.Option($"Expected to be copied to memory address ${Data.GlobalOptions.CharsBaseAddress:X}");
 		Logger.Verbose.Option($"Char start index {Data.CharIndexInRam(0)} (${Data.CharIndexInRam(0):X})");
 		Logger.Verbose.Option("All values as char indices");
 		Logger.Verbose.Option($"Each char uses {Data.GlobalOptions.CharInfo.BytesPerWidth} bytes");
@@ -52,7 +52,7 @@ public class ScreenDataExporter : BaseExporter
 		}
 
 		Logger.Verbose.Separator();
-		Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${Data.ScreenOptions.CharsBaseAddress:X}):");
+		Logger.Verbose.Message($"Exported layer (big endian hex char indices adjusted to base address ${Data.GlobalOptions.CharsBaseAddress:X}):");
 		formatter?.Log(Logger.Verbose.Option);
 	}
 

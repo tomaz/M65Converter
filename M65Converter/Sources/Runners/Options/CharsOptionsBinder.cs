@@ -1,7 +1,6 @@
 ﻿using M65Converter.Runners;
 using M65Converter.Sources.Data.Intermediate;
 using M65Converter.Sources.Data.Providers;
-using M65Converter.Sources.Runners;
 
 using System.CommandLine;
 using System.CommandLine.Binding;
@@ -16,7 +15,7 @@ public class CharsOptionsBinder : BaseOptionsBinder<CharOptions>
 	#region Command line
 
 	private readonly Argument<FileInfo[]> inputs = new(
-		name: "--inputs",
+		name: "inputs",
 		description: "Zero or more input files with base characters"
 	)
 	{

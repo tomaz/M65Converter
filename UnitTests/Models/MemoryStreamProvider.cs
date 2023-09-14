@@ -110,8 +110,21 @@ public class MemoryStreamProvider : IStreamProvider
 	public override string ToString()
 	{
 		var data = GetData();
-		var dataString = data != null ? string.Join(',', data[..30]) : string.Empty;
+		var dataString = data != null && data.Length >= 30 ? string.Join(',', data[..30]) : string.Empty;
 		return $"MemoryStreamProvider {{ {Filename}, {data?.Length ?? 0}: [{dataString}...] }}";
+	}
+
+	#endregion
+
+	#region Public
+
+	public static MemoryStreamProvider Empty(string filename = "")
+	{
+		return new MemoryStreamProvider
+		{
+			Data = Array.Empty<byte>(),
+			Filename = filename
+		};
 	}
 
 	#endregion
