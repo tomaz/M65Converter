@@ -1,0 +1,152 @@
+;==============================================================================
+; BASIC
+;===============================================================================
+
+;-------------------------------------------------------------------------------
+!macro BasicUpstart .start {
+	* = $2001
+
+	!byte $12, $20				; memory address of next line
+	!byte $0a, $00				; BASIC line number 10
+	!byte $fe, $02				; BASIC BANK token
+	!byte $20					; space
+	!byte $30					; 0
+	!byte $3a					; :
+	!byte $9e					; BASIC SYS token
+	!byte $20					; space
+	!pet (.start / 1000) + 48
+	!pet ((.start / 100) % 10) + 48
+	!pet ((.start / 10) % 10) + 48
+	!pet (.start % 10) + 48
+	!byte $00, $00, $00			; end of BASIC terminators
+}
+
+;===============================================================================
+; DMA
+;===============================================================================
+
+!set DMA_JOB_SRC = $0
+!set DMA_JOB_DST = $0
+
+;-------------------------------------------------------------------------------
+!macro DMAExecute .job {
+	; MSB
+	lda #(.job >> 16)
+	sta $d702
+	sta $d704
+
+	; byte 1
+	lda #>.job
+	sta $d701
+
+	; LSB - must be written last as this triggers DMA
+	lda #<.job
+	sta $d705
+}
+
+;-------------------------------------------------------------------------------
+!macro DMAJobNew .src, .dst {
+	!set DMA_JOB_SRC = .src
+	!set DMA_JOB_DST = .dst
+
+	; request format is F018A
+	!byte $0a
+
+	; source bank
+	!byte $80
+	!byte (.src >> 20)
+
+	; destination bank
+	!byte $81
+	!byte (.dst >> 20)
+}
+
+;-------------------------------------------------------------------------------
+!macro DMAJobCopy .len, .chained, .backwards {
+	!if .chained = 0 {
+		!set _marker = $00
+	} else {
+		!set _marker = $04
+	}
+
+	!if .backwards != 0 {
+		!set _src = DMA_JOB_SRC + .len - 1
+		!set _dst = DMA_JOB_DST + .len - 1
+	} else {
+		!set _src = DMA_JOB_SRC
+		!set _dst = DMA_JOB_DST
+	}
+
+	; no more options
+	!byte $00
+
+	; marker
+	!byte _marker
+
+	; length
+	!word .len
+
+	; source address
+	!word (_src & $ffff)
+	!byte ((_src >> 16) & $0f)
+
+	; destination address
+	!word (_dst & $ffff)
+	!byte ((_dst >> 16) & $0f)
+
+	!if .chained != 0 {
+		!word $0000
+	}
+}
+
+;-------------------------------------------------------------------------------
+!macro DMAJobFill .len, .chained {
+	!if .chained = 0 {
+		!set _marker = $03
+	} else {
+		!set _marker = $07
+	}
+
+	; no more options
+	!byte $00
+
+	; marker
+	!byte _marker
+
+	; length
+	!word .len
+
+	; source
+	!word (DMA_JOB_SRC & $ffff)
+	!byte $00
+
+	; destination
+	!word (DMA_JOB_DST & $ffff)
+	!byte ((DMA_JOB_DST >> 16) & $0f)
+
+	!if .chained != 0 {
+		!word $0000
+	}
+}
+
+;-------------------------------------------------------------------------------
+!macro DMAJobStepSrc .step {
+	!byte $82
+	!byte (.step && $ff)
+	!byte $83
+	!byte ((.step >> 8) & $ff)
+}
+
+;-------------------------------------------------------------------------------
+!macro DMAJobStepDst .step {
+	!byte $84
+	!byte (.step & $ff)
+	!byte $85
+	!byte ((.step >> 8) & $ff)
+}
+
+;-------------------------------------------------------------------------------
+!macro DMAJobDisableTransparency {
+	!byte $06
+}
+

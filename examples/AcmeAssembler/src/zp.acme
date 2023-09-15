@@ -1,0 +1,159 @@
+!set ZP_ADDR = $02			; starting address
+
+;===============================================================================
+; MACROS - ALLOCATING
+;===============================================================================
+
+;-------------------------------------------------------------------------------
+; Internal use only
+!macro ZPAlloc ~.name, .len {
+	!set .name = ZP_ADDR
+
+	!set ZP_ADDR = ZP_ADDR + .len
+}
+
+;-------------------------------------------------------------------------------
+; Allocates a double word, 32-bit space in ZP
+!macro ZPAllocDWord ~.name {
+	+ZPAlloc ~.name, 4
+}
+
+;-------------------------------------------------------------------------------
+; Allocates a word, 16-bit space in ZP
+!macro ZPAllocWord ~.name {
+	+ZPAlloc ~.name, 2
+}
+
+;-------------------------------------------------------------------------------
+; Allocates a byte, 8-bit space in ZP
+!macro ZPAllocByte ~.name {
+	+ZPAlloc ~.name, 1
+}
+
+;===============================================================================
+; VARIABLES
+;===============================================================================
+
++ZPAllocDWord ~zp_dword0
++ZPAllocDWord ~zp_dword1
++ZPAllocDWord ~zp_dword2
++ZPAllocDWord ~zp_dword3
++ZPAllocDWord ~zp_dword4
+
++ZPAllocWord ~zp_word0
++ZPAllocWord ~zp_word1
++ZPAllocWord ~zp_word2
++ZPAllocWord ~zp_word3
++ZPAllocWord ~zp_word4
+
++ZPAllocByte ~zp_byte0
++ZPAllocByte ~zp_byte1
++ZPAllocByte ~zp_byte2
++ZPAllocByte ~zp_byte3
++ZPAllocByte ~zp_byte4
+
+;===============================================================================
+; MACROS - ASSIGNING
+;===============================================================================
+
+;-------------------------------------------------------------------------------
+; Internal use only
+!macro ZPAssignIndex .dst, .len {
+	; if Y is 0, we already have correct value, so can exit
+	cpy #0
+	beq @exit
+
+	; we want to preserve Y
+	phy
+
+@next:
+	; increment pointer to next value (we assume len is at least 1)
+	clc
+	lda #.len
+	adc .dst
+	sta .dst
+
+	; repeat for all other bytes, based on .len
+	!set i = 1
+	!while i < .len {
+		lda #0
+		adc .dst + i
+		sta .dst + i
+		!set i = i + 1
+	}
+
+	; repeat with next index
+	dey
+	bne @next
+
+	; restore Y
+	ply
+
+@exit:
+}
+
+;-------------------------------------------------------------------------------
+; Assigns the given source address to the given ZP address
+!macro ZPAssignDWord .dst, .src {
+	lda #<.src
+	sta .dst
+	lda #>.src
+	sta .dst + 1
+	lda #<(.src >> 16)
+	sta .dst + 2
+	lda #>(.src >> 16)
+	sta .dst + 3
+}
+
+;-------------------------------------------------------------------------------
+; Assigns the given source address to the given ZP address
+!macro ZPAssignWord .dst, .src {
+	lda #<.src
+	sta .dst
+	lda #>.src
+	sta .dst + 1
+}
+
+;-------------------------------------------------------------------------------
+; Assigns the given source address to the given ZP address
+!macro ZPAssignByte .src, .dst {
+	lda #.src
+	sta .dst
+}
+
+;-------------------------------------------------------------------------------
+; Assigns the address at the index from Y register from the base source address into the given ZP address.
+;
+; The result is: destination = source + Y * 4
+!macro ZPAssignDWordIndex .src, .dst {
+	+ZPAssignDWord .dst, .src
+	+ZPAssignIndex .dst, 4
+}
+
+;===============================================================================
+; SPRITES ZERO PAGE
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; NOTE1: ideally this would be implemented in sprites.acme, but implementing it here prevents assemble time errors. This file is not meant as generic data anyway - while above ZP "allocations" are required for various sub-systems included with this code base, each individual game would require its own set of additional ZP storage.
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; NOTE2: the macros do not depend on selected sprite, though maybe it would be nice to be able to move all of this data to one-time setup!?
+;===============================================================================
+
+; this is just so we can use more meaningful names in sprites code
+SPRITE_POSITION_X = zp_dword0
+SPRITE_POSITION_Y = zp_dword1
+SPRITE_VELOCITY_X = zp_dword2
+SPRITE_VELOCITY_Y = zp_dword3
+SPRITE_GOTOX_ADDR = zp_dword4
+
+SPRITE_GOTOX_LO = zp_word0
+SPRITE_GOTOX_MID = zp_word1
+SPRITE_GOTOX_HIGH = zp_word2
+SPRITE_FRAME_DATA = zp_word3
+SPRITE_FRAME_DATA_FIRST = zp_word4
+
+SPRITE_INDEX = zp_byte0
+SPRITE_DRAW_GOTOX_ROW = zp_byte1
+SPRITE_DRAW_TOP_ROW = zp_byte2
+SPRITE_DRAW_BOTTOM_ROW = zp_byte3
+SPRITE_DRAW_FRAME_ROW = zp_byte4
+

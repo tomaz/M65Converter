@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "M65Converter": {
-      "commandName": "Project",
-      "commandLineArgs": "--verbosity verbose\r\n--colour ncm\r\n--info 2\r\n--screen-address $10000\r\n--chars-address $20000\r\nchars\r\n--out-chars ..\\..\\..\\..\\KickAssembler\\build\\assets\\input-level\\chars.bin\r\n--out-palette ..\\..\\..\\..\\KickAssembler\\build\\assets\\input-level\\chars.pal\r\n..\\..\\..\\..\\UnitTests\\Resources\\input-base-chars.png\r\nscreens\r\n--out-screen ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\screen.bin\r\n--out-colour ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\colour.bin\r\n--out-lookup ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\lookup.inf\r\n--out-info ..\\..\\..\\..\\KickAssembler\\build\\assets\\{level}\\info.png\r\n..\\..\\..\\..\\UnitTests\\Resources\\input-level.aseprite"
-    }
-  }
-}
