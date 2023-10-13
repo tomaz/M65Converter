@@ -1,8 +1,4 @@
-﻿using M65Converter.Sources.Data.Intermediate;
-
-using System.Reflection;
-
-namespace UnitTests.Creators;
+﻿namespace UnitTests.Creators;
 
 public abstract class BaseCreator<T>
 {

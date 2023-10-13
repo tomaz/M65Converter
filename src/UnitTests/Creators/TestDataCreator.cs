@@ -16,6 +16,9 @@ public class TestDataCreator
 	public bool IsScreensRunnerEnabled { get; private set; }
 	public bool IsScreensInputUsed { get; private set; }
 
+	public bool IsRRBSpritesRunnerEnabled { get; private set; }
+	public bool IsRRBSpritesInputUsed { get; private set; }
+
 	private DataContainerCreator? dataContainerCreator;
 
 	#region Builder
@@ -46,6 +49,13 @@ public class TestDataCreator
 		return this;
 	}
 
+	public TestDataCreator RunRRBSprites(bool run = true, bool withInput = true)
+	{
+		IsRRBSpritesRunnerEnabled = run;
+		IsRRBSpritesInputUsed = withInput;
+		return this;
+	}
+
 	#endregion
 
 	#region Getting data
@@ -71,6 +81,14 @@ public class TestDataCreator
 	public InputScreensDataCreator GetInputScreensDataCreator()
 	{
 		return new InputScreensDataCreator
+		{
+			TestData = this
+		};
+	}
+
+	public InputRRBSpritesDataCreator GetInputRRBSpritesDataCreator()
+	{
+		return new InputRRBSpritesDataCreator
 		{
 			TestData = this
 		};

@@ -13,6 +13,7 @@ function Run-Converter
 		[string]$Colour,
 		[bool]$IsBaseChars=$false,
 		[bool]$IsScreens=$false,
+		[bool]$IsSprites=$false,
 		[bool]$IsRRB=$false
 	)
 
@@ -26,7 +27,12 @@ function Run-Converter
 	}
 
 	$SCREENS = ""
-	if ($IsScreens) {
+	if ($IsSprites) 
+	{
+		$OUT_PREFIX = "$($OUT_PREFIX)+sprites"
+	}
+	elseif ($IsScreens)
+	{
 		$OUT_PREFIX = "$($OUT_PREFIX)+screens"
 	}
 
@@ -44,31 +50,42 @@ function Run-Converter
 		$OPT_CHARS = "$OPT_CHARS $IN_PATH\input-base-chars.png"
 	}
 
-	# Prepare cmd line options for screens. We only use screens if the options is provided.
+	# Prepare cmd line options for screens. We only use screens if the option is provided.
 	$OPT_SCREENS = ""
 	if ($IsScreens)
 	{
 		$OPT_SCREENS = "screens $RRB --out-screen $OUT_PREFIX-screen.bin --out-colour $OUT_PREFIX-colour.bin --out-lookup $OUT_PREFIX-lookup.bin $IN_PATH\input-level.aseprite"
 	}
 
-	Invoke-Expression "$CONVERT $OPT_COMMON --colour $Colour $BASE_CHARS $SCREENS $OPT_CHARS $OPT_SCREENS"
+	# Prepare cmd line options for RRB sprites. We only add them if the option is provided.
+	$OPT_SPRITES = ""
+	if ($IsSprites)
+	{
+		$OPT_SPRITES = "rrbsprites --frame-size 32x32 --append-screens --out-frames $OUT_PREFIX+spr-%name%.bin --out-lookup $OUT_PREFIX+spr-%name%.inf $IN_PATH\input-sprite1.aseprite $IN_PATH\input-sprite2.png"
+	}
+
+	Invoke-Expression "$CONVERT $OPT_COMMON --colour $Colour $BASE_CHARS $SCREENS $OPT_CHARS $OPT_SCREENS $OPT_SPRITES"
 }
 
-function Run-Colour
+function Run-Set
 {
 	param
 	(
-		[bool]$IsRRB=$false
+		[bool]$IsRRB=$false,
+		[bool]$IsSprites=$false
 	)
 
 	for ($i = 0; $i -lt $COLOURS.Count; $i++)
 	{
-		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $false -IsScreens $false -IsRRB $IsRRB
-		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $false -IsScreens $true -IsRRB $IsRRB
-		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $true -IsScreens $false -IsRRB $IsRRB
-		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $true -IsScreens $true -IsRRB $IsRRB
+		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $false -IsScreens $false -IsRRB $IsRRB -IsSprites $IsSprites
+		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $false -IsScreens $true -IsRRB $IsRRB  -IsSprites $IsSprites
+		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $true -IsScreens $false -IsRRB $IsRRB -IsSprites $IsSprites
+		Run-Converter -Colour $COLOURS[$i] -IsBaseChars $true -IsScreens $true -IsRRB $IsRRB -IsSprites $IsSprites
 	}
 }
 
-Run-Colour -IsRRB $false
-Run-Colour -IsRRB $true
+Run-Set -IsRRB $false -IsSprites $false
+Run-Set -IsRRB $false -IsSprites $true
+Run-Set -IsRRB $true -IsSprites $false
+Run-Set -IsRRB $true -IsSprites $true
+

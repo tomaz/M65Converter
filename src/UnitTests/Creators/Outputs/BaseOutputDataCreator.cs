@@ -21,6 +21,9 @@ public abstract class BaseOutputDataCreator
 	protected bool IsScreensRunnerEnabled { get => TestData.IsScreensRunnerEnabled; }
 	protected bool IsScreensInputUsed { get => TestData.IsScreensInputUsed; }
 
+	protected bool IsRRBSpritesRunnerEnabled { get => TestData.IsRRBSpritesRunnerEnabled; }
+	protected bool IsRRBSpritesInputUsed { get => TestData.IsRRBSpritesInputUsed; }
+
 	private MemoryStreamProvider? expectedStream;
 	private MemoryStreamProvider? actualStream;
 

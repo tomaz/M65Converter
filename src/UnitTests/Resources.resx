@@ -160,6 +160,60 @@
   <data name="export_fcm_base_screens_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm+base+screens-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="export_fcm_base_sprites_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_rrb_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+rrb+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_fcm_base_sprites_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_fcm_base_sprites_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_base_sprites_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+base+sprites+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="export_fcm_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -201,6 +255,60 @@
   </data>
   <data name="export_fcm_screens_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-fcm+screens-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_rrb_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+rrb+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_fcm_sprites_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_fcm_sprites_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_fcm_sprites_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-fcm+sprites+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
   <data name="export_ncm_base_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm+base-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -244,6 +352,60 @@
   <data name="export_ncm_base_screens_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm+base+screens-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="export_ncm_base_sprites_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_rrb_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+rrb+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_ncm_base_sprites_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_ncm_base_sprites_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_base_sprites_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+base+sprites+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="export_ncm_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -286,10 +448,70 @@
   <data name="export_ncm_screens_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\export-ncm+screens-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="export_ncm_sprites_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb-chars.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_colour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb-colour.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_lookup" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb-lookup.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_palette" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb-palette.pal;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_rrb_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+rrb+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_ncm_sprites_screen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites-screen.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_spr_input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+spr-input-sprite1.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_spr_input_sprite11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+spr-input-sprite1.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="export_ncm_sprites_spr_input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+spr-input-sprite2.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="export_ncm_sprites_spr_input_sprite21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\export-ncm+sprites+spr-input-sprite2.inf;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="input_base_chars" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\input-base-chars.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="input_level" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\input-level.aseprite;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="input_sprite1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\input-sprite1.aseprite;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="input_sprite2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\input-sprite2.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

@@ -20,17 +20,27 @@ public class OutputColourDataCreator : BaseOutputDataCreator
 	{
 		return new MemoryStreamProvider
 		{
-			Data = (ColourMode, IsCharsInputUsed, IsScreensInputUsed, IsRRBEnabled) switch
+			Data = (ColourMode, IsCharsInputUsed, IsScreensInputUsed, IsRRBSpritesInputUsed, IsRRBEnabled) switch
 			{
-				(CharColourMode.NCM, false, true, false) => Resources.export_ncm_screens_colour,
-				(CharColourMode.NCM, false, true, true) => Resources.export_ncm_screens_rrb_colour,
-				(CharColourMode.NCM, true, true, false) => Resources.export_ncm_base_screens_colour,
-				(CharColourMode.NCM, true, true, true) => Resources.export_ncm_base_screens_rrb_colour,
+				(CharColourMode.NCM, false, true, false, false) => Resources.export_ncm_screens_colour,
+				(CharColourMode.NCM, false, true, false, true) => Resources.export_ncm_screens_rrb_colour,
+				(CharColourMode.NCM, true, true, false, false) => Resources.export_ncm_base_screens_colour,
+				(CharColourMode.NCM, true, true, false, true) => Resources.export_ncm_base_screens_rrb_colour,
 
-				(CharColourMode.FCM, false, true, false) => Resources.export_fcm_screens_colour,
-				(CharColourMode.FCM, false, true, true) => Resources.export_fcm_screens_rrb_colour,
-				(CharColourMode.FCM, true, true, false) => Resources.export_fcm_base_screens_colour,
-				(CharColourMode.FCM, true, true, true) => Resources.export_fcm_base_screens_rrb_colour,
+				(CharColourMode.NCM, false, true, true, false) => Resources.export_ncm_sprites_colour,
+				(CharColourMode.NCM, false, true, true, true) => Resources.export_ncm_sprites_rrb_colour,
+				(CharColourMode.NCM, true, true, true, false) => Resources.export_ncm_base_sprites_colour,
+				(CharColourMode.NCM, true, true, true, true) => Resources.export_ncm_base_sprites_rrb_colour,
+
+				(CharColourMode.FCM, false, true, false, false) => Resources.export_fcm_screens_colour,
+				(CharColourMode.FCM, false, true, false, true) => Resources.export_fcm_screens_rrb_colour,
+				(CharColourMode.FCM, true, true, false, false) => Resources.export_fcm_base_screens_colour,
+				(CharColourMode.FCM, true, true, false, true) => Resources.export_fcm_base_screens_rrb_colour,
+
+				(CharColourMode.FCM, false, true, true, false) => Resources.export_fcm_sprites_colour,
+				(CharColourMode.FCM, false, true, true, true) => Resources.export_fcm_sprites_rrb_colour,
+				(CharColourMode.FCM, true, true, true, false) => Resources.export_fcm_base_sprites_colour,
+				(CharColourMode.FCM, true, true, true, true) => Resources.export_fcm_base_sprites_rrb_colour,
 
 				_ => Array.Empty<byte>()
 			},

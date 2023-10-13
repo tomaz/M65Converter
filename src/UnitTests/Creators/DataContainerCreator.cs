@@ -70,6 +70,23 @@ public class DataContainerCreator : BaseCreator<DataContainer>
 				}
 			);
 		}
+
+		if (TestData.IsRRBSpritesRunnerEnabled)
+		{
+			container.Runners.Register(
+				new RRBSpritesRunner
+				{
+					Data = container,
+
+					Options = new RRBSpritesOptions
+					{
+						Inputs = TestData.GetInputRRBSpritesDataCreator().Get(),
+						FrameSize = new Size(32, 32),
+						IsAppendingToScreenDataEnabled = true,
+					}
+				}
+			);
+		}
 	}
 
 	#endregion

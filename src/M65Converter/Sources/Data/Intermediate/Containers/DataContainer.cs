@@ -98,12 +98,16 @@ public class DataContainer
 	/// </summary>
 	protected virtual string ScreenPathFromTemplate(string template, ScreenExportData screen)
 	{
-		return template.Replace("{level}", screen.LevelName);
+		return template
+			.Replace("{level}", screen.LevelName)
+			.Replace("%level%", screen.LevelName);
 	}
 
 	protected virtual string SpritePathFromTemplate(string template,  SpriteExportData sprite)
 	{
-		return template.Replace("{name}", sprite.SpriteName);
+		return template
+			.Replace("{name}", sprite.SpriteName)
+			.Replace("%name%", sprite.SpriteName);
 	}
 
 	#endregion

@@ -151,7 +151,7 @@ public class RRBSpritesOptions
 	/// 
 	/// Only applicable if <see cref="IsAppendingToScreenDataEnabled"/> is true.
 	/// </summary>
-	public Point[] SpritePositions { get; init; } = null!;
+	public Point[] SpritePositions { get; init; } = Array.Empty<Point>();
 
 	/// <summary>
 	/// Optional frame size.

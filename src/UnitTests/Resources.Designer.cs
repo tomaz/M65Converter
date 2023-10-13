@@ -203,6 +203,182 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] export_fcm_base_sprites_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_base_sprites_rrb_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_fcm_base_sprites_rrb_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_rrb_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_rrb_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_base_sprites_rrb_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_fcm_base_sprites_rrb_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_base_sprites_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_fcm_base_sprites_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_base_sprites_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_base_sprites_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_base_sprites_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_fcm_base_sprites_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] export_fcm_chars {
             get {
                 object obj = ResourceManager.GetObject("export_fcm_chars", resourceCulture);
@@ -337,6 +513,182 @@ namespace UnitTests {
             get {
                 object obj = ResourceManager.GetObject("export_fcm_screens_screen", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_sprites_rrb_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_fcm_sprites_rrb_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_rrb_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_rrb_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_sprites_rrb_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_fcm_sprites_rrb_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_sprites_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_fcm_sprites_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_fcm_sprites_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_fcm_sprites_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  .
+        /// </summary>
+        internal static string export_fcm_sprites_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_fcm_sprites_spr_input_sprite21", resourceCulture);
             }
         }
         
@@ -483,6 +835,182 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] export_ncm_base_sprites_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_base_sprites_rrb_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_ncm_base_sprites_rrb_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_rrb_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_rrb_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_base_sprites_rrb_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_ncm_base_sprites_rrb_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_base_sprites_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_ncm_base_sprites_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_base_sprites_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_base_sprites_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_base_sprites_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_ncm_base_sprites_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] export_ncm_chars {
             get {
                 object obj = ResourceManager.GetObject("export_ncm_chars", resourceCulture);
@@ -623,6 +1151,182 @@ namespace UnitTests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] export_ncm_sprites_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_chars {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_chars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_colour {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_colour", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_lookup {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_lookup", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_palette {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_palette", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_sprites_rrb_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_ncm_sprites_rrb_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_rrb_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_rrb_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_sprites_rrb_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_ncm_sprites_rrb_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_screen {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_screen", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_spr_input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_spr_input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_sprites_spr_input_sprite11 {
+            get {
+                return ResourceManager.GetString("export_ncm_sprites_spr_input_sprite11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] export_ncm_sprites_spr_input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("export_ncm_sprites_spr_input_sprite2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string export_ncm_sprites_spr_input_sprite21 {
+            get {
+                return ResourceManager.GetString("export_ncm_sprites_spr_input_sprite21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] input_base_chars {
             get {
                 object obj = ResourceManager.GetObject("input_base_chars", resourceCulture);
@@ -636,6 +1340,26 @@ namespace UnitTests {
         internal static byte[] input_level {
             get {
                 object obj = ResourceManager.GetObject("input_level", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] input_sprite1 {
+            get {
+                object obj = ResourceManager.GetObject("input_sprite1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] input_sprite2 {
+            get {
+                object obj = ResourceManager.GetObject("input_sprite2", resourceCulture);
                 return ((byte[])(obj));
             }
         }

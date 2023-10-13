@@ -15,7 +15,7 @@ public class ScreenExportTests
 	[InlineData(CharColourMode.FCM, true)]
 	[InlineData(CharColourMode.NCM, false)]
 	[InlineData(CharColourMode.NCM, true)]
-	public void Screen_ShouldExport_BaseCharactersOnly(CharColourMode colour, bool rrb)
+	public void Screen__ShouldExport__Base(CharColourMode colour, bool rrb)
 	{
 		// setup
 		var testData = new TestDataCreator()
@@ -38,7 +38,7 @@ public class ScreenExportTests
 	[InlineData(CharColourMode.FCM, true)]
 	[InlineData(CharColourMode.NCM, false)]
 	[InlineData(CharColourMode.NCM, true)]
-	public void Screen_ShouldExport_ScreenCharactersOnly(CharColourMode colour, bool rrb)
+	public void Screen__ShouldExport__Screen(CharColourMode colour, bool rrb)
 	{
 		// setup
 		var testData = new TestDataCreator()
@@ -61,7 +61,31 @@ public class ScreenExportTests
 	[InlineData(CharColourMode.FCM, true)]
 	[InlineData(CharColourMode.NCM, false)]
 	[InlineData(CharColourMode.NCM, true)]
-	public void Screen_ShouldExport_BaseAndScreenCharacters(CharColourMode colour, bool rrb)
+	public void Screen__ShouldExport__Screen_Sprites(CharColourMode colour, bool rrb)
+	{
+		// setup
+		var testData = new TestDataCreator()
+			.Colour(colour)
+			.RasterRewriteBuffer(rrb)
+			.RunScreens()
+			.RunRRBSprites();
+
+		// execute
+		testData.GetDataContainerCreator().Get().Run();
+
+		// verify
+		var testDataCreator = testData.GetScreenDataCreator();
+		var expectedData = testDataCreator.GetExpectedData();
+		var actualData = testDataCreator.GetActualData();
+		Assert.Equal(expectedData, actualData);
+	}
+
+	[Theory]
+	[InlineData(CharColourMode.FCM, false)]
+	[InlineData(CharColourMode.FCM, true)]
+	[InlineData(CharColourMode.NCM, false)]
+	[InlineData(CharColourMode.NCM, true)]
+	public void Screen__ShouldExport__Base_Screen(CharColourMode colour, bool rrb)
 	{
 		// setup
 		var testData = new TestDataCreator()
@@ -69,6 +93,31 @@ public class ScreenExportTests
 			.RasterRewriteBuffer(rrb)
 			.RunChars()
 			.RunScreens();
+
+		// execute
+		testData.GetDataContainerCreator().Get().Run();
+
+		// verify
+		var testDataCreator = testData.GetScreenDataCreator();
+		var expectedData = testDataCreator.GetExpectedData();
+		var actualData = testDataCreator.GetActualData();
+		Assert.Equal(expectedData, actualData);
+	}
+
+	[Theory]
+	[InlineData(CharColourMode.FCM, false)]
+	[InlineData(CharColourMode.FCM, true)]
+	[InlineData(CharColourMode.NCM, false)]
+	[InlineData(CharColourMode.NCM, true)]
+	public void Screen__ShouldExport__Base_Screen_Sprites(CharColourMode colour, bool rrb)
+	{
+		// setup
+		var testData = new TestDataCreator()
+			.Colour(colour)
+			.RasterRewriteBuffer(rrb)
+			.RunChars()
+			.RunScreens()
+			.RunRRBSprites();
 
 		// execute
 		testData.GetDataContainerCreator().Get().Run();
