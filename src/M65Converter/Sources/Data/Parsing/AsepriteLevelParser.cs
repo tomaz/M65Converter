@@ -1,0 +1,51 @@
+﻿using M65Converter.Sources.Data.Models;
+using M65Converter.Sources.Data.Providers;
+using M65Converter.Sources.Helpers.Utils;
+
+namespace M65Converter.Sources.Data.Parsing;
+
+/// <summary>
+/// Parses <see cref="Level"/> from Aseprite file.
+/// </summary>
+public class AsepriteLevelParser
+{
+	#region Parsing
+
+	public Level Parse(IStreamProvider source)
+	{
+		var path = source.GetFilename();
+		Logger.Verbose.Message($"Parsing {Path.GetFileName(path)}");
+
+		var aseprite = Aseprite.Parse(source);
+
+		// For levels we assume there's only 1 frame. But if more, we always take the first.
+		Logger.Verbose.Message("Preparing layers");
+		var frame = aseprite.GeneratedFrames.First();
+		var layers = frame.LayerImages.Select((x, i) => new Level.LayerData
+		{
+			Path = path,
+			Name = frame.LayerNames[i],
+			Image = x,
+		});
+
+		// Prepare composite layer, it's more accurate representation if merged layers are needed as it takes care of layer transparency etc.
+		var composite = new Level.LayerData
+		{
+			Path = path,
+			Name = frame.LayerNames.First(),
+			Image = frame.CompositeImage
+		};
+
+		return new Level
+		{
+			Width = aseprite.AsepriteHeader.Width,
+			Height = aseprite.AsepriteHeader.Height,
+			LevelName = Path.GetFileNameWithoutExtension(path),
+			RootFolder = Path.GetDirectoryName(path)!,
+			CompositeLayer = composite,
+			Layers = layers.ToList()
+		};
+	}
+
+	#endregion
+}

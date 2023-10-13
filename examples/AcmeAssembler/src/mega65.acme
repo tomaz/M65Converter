@@ -1,0 +1,99 @@
+;-------------------------------------------------------------------------------
+; Sets up Mega65 for full hardware access and enables VIC-III and VIC-IV registers
+M65SetupHardwareAccess:
+	; clear C65 memory map first
+	lda #$00
+	tax
+	tay
+	taz
+	map
+
+	; bank I/O via C64 mechanism
+	lda #$35
+	sta $01
+
+	; enable VIC-III and VIC-IV registers
+	lda #$47
+	sta $d02f
+	lda #$53
+	sta $d02f
+
+	; end map sequence, allowing interrupts to occur again
+	eom
+
+	; perform hypervisor call to un-write protect ROM area $20000-$3ffff
+	lda #$70
+	sta $d640
+	eom
+
+	; unmap C65 roms by clearing bits 7-3
+	lda #%11111000
+	trb $d030
+
+	rts
+
+;-------------------------------------------------------------------------------
+M65Enable40Mhz:
+	lda #$41
+	sta $00
+	rts
+
+;-------------------------------------------------------------------------------
+M65DisableVIC2HotRegisters:
+	; disable VIC2 multi colour mode
+	lda #%00010000
+	trb $d016
+	
+	; Disable hot registers by turning off bit 7 
+	lda #%10000000
+	trb $d05d		; wont destroy VIC4 values (bit 7)
+
+	rts
+
+;-------------------------------------------------------------------------------
+M65Setup40x25VideoMode:
+	; bit 7 off = 40 character mode
+	; bit 5 off = disable VIC3 ATTR register to enable 8bit color
+	lda #%10100000
+	trb $d031
+
+	; Turn on FCM mode and 16bit per char number
+	; bit 2 = Enable FCM for chars > $ff
+	; bit 1 = Enable FCM for chars <= $ff
+	; bit 0 = Enable 16 bit char numbers (super extended attribute mode)
+	lda #%00000111
+	sta $d054
+
+	; Enable RAM palettes
+	lda #$04
+	tsb $d030
+
+	rts
+
+;-------------------------------------------------------------------------------
+M65DisableInterrupts:
+	; CIA
+	lda #$7f
+	sta $dc0d
+	sta $dd0d
+
+	; IRQ raster interrupts because C65 uses raster interrupts in the ROM
+	lda #$00
+	sta $d01a
+
+	rts
+
+;-------------------------------------------------------------------------------
+; A = raster to wait
+M65WaitRaster:
+	; wait the given raster
+	cmp $d012
+	bne * - 3
+
+	; wait until next line
+	inc
+	cmp $d012
+	bne * - 3
+
+	rts
+

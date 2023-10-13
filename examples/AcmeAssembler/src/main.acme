@@ -1,0 +1,263 @@
+!src "zp.acme"
+!src "macros.acme"
+
++BasicUpstart Main
+
+* = $2020
+
+;-------------------------------------------------------------------------------
+Main:
+	sei
+	jsr M65SetupHardwareAccess
+	jsr M65Enable40Mhz
+	jsr M65Setup40x25VideoMode
+	jsr M65DisableInterrupts
+	cli
+
+	jsr ScreenInit
+	jsr GameInit
+	jsr GameRun
+
+	rts
+
+;===============================================================================
+;===============================================================================
+
+;-------------------------------------------------------------------------------
+GameInit:
+	jsr GameSetupSprite0
+	jsr GameSetupSprite1
+	rts
+
+;-------------------------------------------------------------------------------
+GameRun:
+	lda #$fe
+	jsr M65WaitRaster
+
+	inc $d020
+	jsr GameUpdateSprite0
+	jsr GameUpdateSprite1
+	dec $d020
+
+	bra GameRun
+
+;-------------------------------------------------------------------------------
+GameUpdateSprite0:
+	; set sprite #0 for subsequent handling
+	ldy #0
+	jsr SpriteSelect
+
+	; update position with current velocity
+	jsr SpriteApplyVelocity
+
+	; constrain sprite movement in x coordinate to 10 - 250
+@testx:
+	ldz #0
+	ldq [SPRITE_POSITION_X]			; Q <- X position, A = fraction, X = low, Y = high
+	txa								; A <- low byte
+	sec
+	sbc #10							; A <- A - 10 (establish min value)
+	cmp #251						; check for max value
+	bcc @testy						; if carry is clear, we're in valid range, check Y
+	jsr SpriteReverseVelocityX		; otherwise reverse X velocity
+
+	; constrain sprite movement in y coordinate to 10 - 100
+@testy:
+	ldz #0
+	ldq [SPRITE_POSITION_Y]			; Q <- Y position, A = fraction, X = pixel position
+	txa								; A <- pixel position
+	sec
+	sbc #10							; A <- A - 10 (establish min value)
+	cmp #101						; check for max value
+	bcc @update						; if carry is clear, we're in valid range, update
+	jsr SpriteReverseVelocityY
+
+@update:
+	; update animation frame
+	jsr SpriteAnimAdvanceFrame
+
+	; update RRB data to apply new position
+	jsr SpriteApplyRRBPosition
+
+	rts
+
+;-------------------------------------------------------------------------------
+GameUpdateSprite1:
+	; set sprite #1 for subsequent handling
+	ldy #1
+	jsr SpriteSelect
+
+	; update animation frame
+	jsr SpriteAnimAdvanceFrame
+
+	; update RRB data in screen memory with new frame
+	jsr SpriteApplyRRBPosition
+	rts
+
+
+;-------------------------------------------------------------------------------
+GameSetupSprite0:
+	; set sprite #0 for subsequent handling
+	ldy #0
+	jsr SpriteSelect
+
+	; setup GOTOX pointers
+	ldx #>SPRITE_IDLE_GOTOX_LO	; X <- addr high byte
+	lda #<SPRITE_IDLE_GOTOX_LO	; A <- addr low byte
+	jsr SpriteSetupGotoXLo
+
+	ldx #>SPRITE_IDLE_GOTOX_MID	; X <- addr high byte
+	lda #<SPRITE_IDLE_GOTOX_MID	; A <- addr low byte
+	jsr SpriteSetupGotoXMid
+
+	ldx #>SPRITE_IDLE_GOTOX_HIGH; X <- addr high byte
+	lda #<SPRITE_IDLE_GOTOX_HIGH; A <- addr low byte
+	jsr SpriteSetupGotoXHigh
+
+	; setup frames data
+	ldx #>DataSprIdleFramesData
+	lda #<DataSprIdleFramesData
+	jsr SpriteSetupFramesData
+
+	; setup animation
+	lda #GameSpriteIdleFrameAnimLen	; A <- number of frames
+	ldy #>GameSpriteFrameAnim		; Y <- animation table high byte
+	ldx #<GameSpriteFrameAnim		; X <- animation table low byte
+	ldz #5							; Z <- duration of each frame (as screen refresh count)
+	jsr SpriteSetupAnimFrames
+
+	; setup initial X position
+	ldy #^POSITION_0_X		; Y <- high byte
+	ldx #>POSITION_0_X		; X <- low byte
+	lda #<POSITION_0_X		; A <- fractional
+	jsr SpriteSetX
+
+	; setup initial Y position
+	ldx #>POSITION_0_Y		; X <- position
+	lda #<POSITION_0_Y		; A <- fractional
+	jsr SpriteSetY
+
+	; setup initial X velocity
+	ldx #>VELOCITY_X		; X <- velocity
+	lda #<VELOCITY_X		; A <- fractinoal
+	jsr SpriteSetVelocityX
+
+	; setup initial Y velocity
+	ldx #>VELOCITY_Y		; X <- velocity
+	lda #<VELOCITY_Y		; A <- fractional
+	jsr SpriteSetVelocityY
+
+	rts
+
+;-------------------------------------------------------------------------------
+GameSetupSprite1:
+	; set sprite #1 for subsequent handling
+	ldy #1
+	jsr SpriteSelect
+
+	; setup GOTOX pointers
+	ldx #>SPRITE_RUN_GOTOX_LO	; X <- addr high byte
+	lda #<SPRITE_RUN_GOTOX_LO	; A <- addr low byte
+	jsr SpriteSetupGotoXLo
+
+	ldx #>SPRITE_RUN_GOTOX_MID	; X <- addr high byte
+	lda #<SPRITE_RUN_GOTOX_MID	; A <- addr low byte
+	jsr SpriteSetupGotoXMid
+
+	ldx #>SPRITE_RUN_GOTOX_HIGH; X <- addr high byte
+	lda #<SPRITE_RUN_GOTOX_HIGH; A <- addr low byte
+	jsr SpriteSetupGotoXHigh
+
+	; setup frames data
+	ldx #>DataSprRunFramesData
+	lda #<DataSprRunFramesData
+	jsr SpriteSetupFramesData
+
+	; setup animation
+	lda #GameSpriteRunFrameAnimLen	; A <- number of frames
+	ldy #>GameSpriteFrameAnim		; Y <- animation table high byte
+	ldx #<GameSpriteFrameAnim		; X <- animation table low byte
+	ldz #3							; Z <- duration of each frame (as screen refresh count)
+	jsr SpriteSetupAnimFrames
+
+	; setup initial X position
+	ldy #^POSITION_1_X		; Y <- high byte
+	ldx #>POSITION_1_X		; X <- low byte
+	lda #<POSITION_1_X		; A <- fraction
+	jsr SpriteSetX
+
+	; setup initial Y position
+	ldx #>POSITION_1_Y		; X <- position
+	lda #<POSITION_1_Y		; A <- fraction
+	jsr SpriteSetY
+
+	rts
+
+;-------------------------------------------------------------------------------
+GameSpriteFrameAnim:	; we use the same animation table for all animations, just different lenghts...
+	!byte 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+GameSpriteIdleFrameAnimLen = 10
+GameSpriteRunFrameAnimLen = 11
+
+;-------------------------------------------------------------------------------
+; NOTE: LSB represents fractional, hence most of the values are shifted left by 8 bits...
+
+POSITION_0_X = 80 << 8
+POSITION_0_Y = 20 << 8
+
+POSITION_1_X = 128 << 8
+POSITION_1_Y = 7 << 8
+
+VELOCITY_X = 1 << 8
+VELOCITY_Y = 128
+
+;===============================================================================
+;===============================================================================
+
+!src "mega65.acme"
+!src "screen.acme"
+!src "sprites.acme"
+
+;===============================================================================
+;===============================================================================
+
+DataPalette:
+	!bin "assets/chars.pal"
+DataPaletteLen = * - DataPalette
+
+DataChars:
+	!bin "assets/chars.bin"
+DataCharsLen = * - DataChars
+
+DataScreen:
+	!bin "assets/level/screen.bin"
+DataScreenLen = * - DataScreen
+
+DataColours:
+	!bin "assets/level/colour.bin"
+DataColoursLen = * - DataColours
+
+DataScreenLookup:
+	SCREEN_HEIGHT = * + 6
+	SCREEN_ROW_CHARS_WIDTH = * + 18
+	SCREEN_ROW_LOGICAL_WIDTH = * + 22
+
+	SPRITE_IDLE_GOTOX_LO = * + 110
+	SPRITE_IDLE_GOTOX_MID = * + 136
+	SPRITE_IDLE_GOTOX_HIGH  = * + 162
+	
+	SPRITE_RUN_GOTOX_LO = * + 188
+	SPRITE_RUN_GOTOX_MID = * + 214
+	SPRITE_RUN_GOTOX_HIGH = * + 240
+
+	!bin "assets/level/lookup.inf"
+DataScreenLookupLen = * - DataScreenLookup
+
+DataSprIdleFramesData:
+	!bin "assets/spr-player-idle.bin"
+DataSprIdleFramesDataLen = * - DataSprIdleFramesData
+
+DataSprRunFramesData:
+	!bin "assets/spr-player-run.bin"
+DataSprRunFramesLenData = * - DataSprRunFramesData
+

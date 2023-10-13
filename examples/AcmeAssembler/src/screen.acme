@@ -1,0 +1,106 @@
+CHARS_RAM = $0020000
+SCREEN_RAM = $0010000
+COLOUR_RAM = $ff80000
+
+;-------------------------------------------------------------------------------
+ScreenInit:
+	jsr ScreenSetupCharsRAM
+	jsr ScreenSetupScreenRAM
+	jsr ScreenSetupRows
+	jsr ScreenCopyPalette
+	jsr ScreenCopyCharacters
+	jsr ScreenCopyScreen
+	jsr ScreenCopyColours
+	rts
+
+;-------------------------------------------------------------------------------
+ScreenSetupCharsRAM:
+	lda #<CHARS_RAM
+	sta $d068
+	lda #>CHARS_RAM
+	sta $d069
+	lda #<(CHARS_RAM >> 16)
+	sta $d06a
+	rts
+
+;-------------------------------------------------------------------------------
+ScreenSetupScreenRAM:
+	lda #<SCREEN_RAM
+	sta $d060
+	lda #>SCREEN_RAM
+	sta $d061
+	lda #<(SCREEN_RAM >> 16)
+	sta $d062
+	lda #>(SCREEN_RAM >> 16)
+	sta $d063
+	rts
+
+;-------------------------------------------------------------------------------
+ScreenSetupRows:
+	; setup logical row size
+	lda SCREEN_ROW_LOGICAL_WIDTH
+	sta $d058
+	lda SCREEN_ROW_LOGICAL_WIDTH + 1
+	sta $d059
+
+	; setup number of chars per row
+	lda SCREEN_ROW_CHARS_WIDTH
+	sta $d05e
+
+	; setup number of rows
+	lda SCREEN_HEIGHT
+	sta $d07b
+
+	rts
+
+;-------------------------------------------------------------------------------
+ScreenCopyPalette:
+	!set LENGTH = DataPaletteLen / 3
+	!set EDIT = 0		; edit palette number
+	!set CHARS = 0		; chars palette number	
+	!set SPRITES = 1	; sprites palette number
+	!set ALT = 2		; alt palette number
+
+	; edit palette 0, chars palette = 0, sprites = 1, alt = 2
+	lda #((EDIT << 6) | (CHARS << 4) | (SPRITES << 2) | ALT)
+	sta $d070
+
+	ldx #0
+.next:
+	lda DataPalette, x				; red
+	sta $d100, x
+	lda DataPalette + LENGTH, x		; green
+	sta $d200, x
+	lda DataPalette + LENGTH * 2, x	; blue
+	sta $d300, x
+
+	inx
+	cpx #LENGTH
+	bne .next
+
+	rts
+
+;-------------------------------------------------------------------------------
+ScreenCopyCharacters:
+	+DMAExecute @job
+	rts
+@job:
+	+DMAJobNew DataChars, CHARS_RAM
+	+DMAJobCopy DataCharsLen, 0, 0
+
+;-------------------------------------------------------------------------------
+ScreenCopyScreen:
+	+DMAExecute @job
+	rts
+@job:
+	+DMAJobNew DataScreen, SCREEN_RAM
+	+DMAJobCopy DataScreenLen, 0, 0
+
+;-------------------------------------------------------------------------------
+ScreenCopyColours:
+	+DMAExecute @job
+	rts
+@job:
+	+DMAJobNew DataColours, COLOUR_RAM
+	+DMAJobCopy DataColoursLen, 0, 0
+
